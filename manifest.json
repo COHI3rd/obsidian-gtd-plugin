@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-gtd",
+  "name": "GTD Task Manager",
+  "version": "0.1.0",
+  "minAppVersion": "1.0.0",
+  "description": "GTD (Getting Things Done) タスク管理プラグイン - Notion風のドラッグ&ドロップUIで快適なタスク管理を実現",
+  "author": "GTD Plugin Team",
+  "authorUrl": "https://github.com/yourusername/obsidian-gtd-plugin",
+  "isDesktopOnly": false
+}

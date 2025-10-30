@@ -1,0 +1,134 @@
+// 型定義ファイル
+
+/**
+ * GTDワークフロー上のタスクの位置
+ */
+export type TaskStatus = 'inbox' | 'next-action' | 'today' | 'waiting' | 'someday';
+
+/**
+ * タスクの優先度
+ */
+export type TaskPriority = 'low' | 'medium' | 'high';
+
+/**
+ * プロジェクトのステータス
+ */
+export type ProjectStatus = 'not-started' | 'in-progress' | 'completed';
+
+/**
+ * タスクデータモデル
+ *
+ * 【重要な設計思想】
+ * - status: GTDワークフロー上の位置を示す
+ * - completed: タスクの完了状態（進捗率計算に使用）
+ * - project: タスクから親プロジェクトへのリンク（タスク側のみが関連を保持）
+ */
+export interface Task {
+  id: string;                    // ファイル名またはパス
+  title: string;
+  status: TaskStatus;
+  project: string | null;        // [[プロジェクト名]] 形式
+  date: Date | null;             // 実施予定日
+  completed: boolean;
+  priority: TaskPriority;
+  tags: string[];
+  notes: string;
+  body: string;                  // Markdown本文
+  filePath: string;              // Vault内のファイルパス
+
+  // メソッド
+  isToday(): boolean;
+  isTomorrow(): boolean;
+  isOverdue(): boolean;
+  complete(): void;
+  uncomplete(): void;
+  changeStatus(newStatus: TaskStatus): void;
+  setDate(date: Date): void;
+  assignToProject(projectName: string): void;
+  unassignFromProject(): void;
+}
+
+/**
+ * プロジェクトデータモデル
+ *
+ * 【重要な設計思想】
+ * - プロジェクトは子タスクのリストを持たない
+ * - 子タスクは project: [[このプロジェクト]] でプロジェクトを参照
+ * - progress は子タスクの completed: true の割合から自動計算
+ */
+export interface Project {
+  id: string;
+  title: string;
+  importance: number;            // 1-5
+  deadline: Date | null;
+  status: ProjectStatus;
+  actionPlan: string;            // アクションプラン（マルチライン）
+  progress: number;              // 0-100（自動計算）
+  filePath: string;
+
+  // メソッド
+  isOverdue(): boolean;
+  isCompleted(): boolean;
+  changeStatus(newStatus: ProjectStatus): void;
+  updateProgress(progress: number): void;
+  complete(): void;
+  start(): void;
+}
+
+/**
+ * 週次レビューデータモデル
+ */
+export interface WeeklyReview {
+  id: string;
+  date: Date;
+  reviewType: 'weekly';
+  filePath: string;
+}
+
+/**
+ * タスクのフロントマター（YAMLパース用）
+ */
+export interface TaskFrontmatter {
+  title?: string;
+  status?: TaskStatus;
+  project?: string | null;
+  date?: string | Date;
+  completed?: boolean;
+  priority?: TaskPriority;
+  tags?: string[];
+  notes?: string;
+}
+
+/**
+ * プロジェクトのフロントマター（YAMLパース用）
+ */
+export interface ProjectFrontmatter {
+  type?: 'project';
+  title?: string;
+  importance?: number;
+  deadline?: string | Date;
+  status?: ProjectStatus;
+  'action-plan'?: string;
+  progress?: number;
+}
+
+/**
+ * 週次レビューのフロントマター（YAMLパース用）
+ */
+export interface WeeklyReviewFrontmatter {
+  type?: 'weekly-review';
+  date?: string | Date;
+  'review-type'?: 'weekly';
+}
+
+/**
+ * プラグイン設定
+ */
+export interface GTDSettings {
+  taskFolder: string;            // タスクフォルダパス
+  projectFolder: string;         // プロジェクトフォルダパス
+  reviewFolder: string;          // レビューフォルダパス
+  dateFormat: string;            // 日付フォーマット
+  enableAutoDate: boolean;       // 自動日付入力
+  defaultPriority: TaskPriority; // デフォルト優先度
+}

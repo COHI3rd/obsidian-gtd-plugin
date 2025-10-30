@@ -1,0 +1,552 @@
+/* ===== GTD Plugin Styles ===== */
+
+/* メインビュー */
+.gtd-main-view {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.gtd-main-view__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--background-modifier-border);
+}
+
+.gtd-main-view__header h2 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.gtd-main-view__content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  height: calc(100% - 80px);
+  overflow: hidden;
+}
+
+.gtd-main-view__left,
+.gtd-main-view__right {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* タブ */
+.gtd-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.gtd-tab {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+
+.gtd-tab:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+.gtd-tab--active {
+  color: var(--text-accent);
+  border-bottom-color: var(--text-accent);
+  font-weight: 600;
+}
+
+/* セクション */
+.gtd-section {
+  margin-bottom: 16px;
+}
+
+.gtd-section__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.gtd-section__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: var(--background-secondary);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ドロップ可能エリア */
+.gtd-droppable {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  background: var(--background-primary-alt);
+  border: 2px dashed var(--background-modifier-border);
+  border-radius: 8px;
+  min-height: 200px;
+  transition: all 0.2s;
+}
+
+.gtd-droppable--dragging-over {
+  border-color: var(--text-accent);
+  background: var(--background-modifier-hover);
+}
+
+/* タスクカード */
+.gtd-task-card {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.gtd-task-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: var(--text-accent);
+}
+
+.gtd-task-card--dragging {
+  opacity: 0.5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.gtd-task-card--completed {
+  opacity: 0.6;
+}
+
+.gtd-task-card--completed .gtd-task-card__title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.gtd-task-card__checkbox {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.gtd-task-card__checkbox input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.gtd-task-card__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.gtd-task-card__title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  word-wrap: break-word;
+}
+
+.gtd-task-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.gtd-task-card__priority {
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.gtd-task-card__date {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gtd-task-card__date--overdue {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.gtd-task-card__project {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-accent);
+}
+
+.gtd-task-card__tags {
+  display: flex;
+  gap: 4px;
+}
+
+.gtd-task-card__tag {
+  padding: 2px 6px;
+  background: var(--background-secondary);
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.gtd-task-card__notes {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.gtd-task-card__drag-handle {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: grab;
+}
+
+.gtd-task-card__drag-handle:active {
+  cursor: grabbing;
+}
+
+/* コンパクトなタスクカード（右側用） */
+.gtd-task-card--compact {
+  padding: 8px 10px;
+  gap: 8px;
+}
+
+/* Todayビュー用のタスクカード（左側用） */
+.gtd-task-card--today {
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 2px solid var(--text-accent);
+  background: var(--background-primary-alt);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.gtd-task-card--today:hover {
+  border-color: var(--text-accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+/* ヘッダー行: チェックボックス + 今日ラベル */
+.gtd-task-card__header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gtd-task-card__today-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-accent);
+}
+
+/* クリック可能なタイトル */
+.gtd-task-card__title--clickable {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.gtd-task-card__title--clickable:hover {
+  color: var(--text-accent);
+}
+
+/* コンパクトビュー用のドロップエリア */
+.gtd-droppable--compact {
+  padding: 4px;
+  min-height: 100px;
+}
+
+/* 空の状態 */
+.gtd-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+}
+
+.gtd-empty-state p {
+  margin: 8px 0;
+}
+
+.gtd-empty-state__hint {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+/* モーダル */
+.gtd-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.gtd-modal-content {
+  background: var(--background-primary);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.gtd-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.gtd-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.gtd-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.gtd-modal-close:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.gtd-modal-form {
+  padding: 20px;
+}
+
+.gtd-form-group {
+  margin-bottom: 16px;
+}
+
+.gtd-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.gtd-input,
+.gtd-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  color: var(--text-normal);
+  font-size: 14px;
+}
+
+.gtd-input:focus,
+.gtd-select:focus {
+  outline: none;
+  border-color: var(--text-accent);
+}
+
+.gtd-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* ボタン */
+.gtd-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gtd-button--primary {
+  background: var(--interactive-accent);
+  color: white;
+}
+
+.gtd-button--primary:hover {
+  background: var(--interactive-accent-hover);
+}
+
+.gtd-button--secondary {
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+.gtd-button--secondary:hover {
+  background: var(--background-modifier-hover);
+}
+
+/* 進捗バー */
+.gtd-progress-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gtd-progress-bar__track {
+  flex: 1;
+  background: var(--background-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gtd-progress-bar__fill {
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.gtd-progress-bar__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 40px;
+  text-align: right;
+}
+
+/* ローディング */
+.gtd-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+/* プロジェクトカード */
+.gtd-project-card {
+  padding: 16px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 12px;
+}
+
+.gtd-project-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: var(--text-accent);
+}
+
+.gtd-project-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.gtd-project-card__title {
+  font-size: 16px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.gtd-project-card__importance {
+  font-size: 14px;
+  margin-left: 8px;
+}
+
+.gtd-project-card__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.gtd-project-card__status-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.gtd-project-card__deadline {
+  color: var(--text-muted);
+}
+
+.gtd-project-card__deadline--overdue {
+  color: #ff6b6b;
+  font-weight: 600;
+}
+
+.gtd-project-card__progress {
+  margin-bottom: 12px;
+}
+
+.gtd-project-card__action-plan {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+  .gtd-main-view__content {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .gtd-task-card {
+    font-size: 13px;
+  }
+
+  .gtd-project-card__title {
+    font-size: 14px;
+  }
+}
