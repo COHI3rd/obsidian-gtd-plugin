@@ -295,50 +295,56 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
           {/* 左側: Today */}
           <div className="gtd-main-view__left">
             <div className="gtd-section">
-              <h3 className="gtd-section__title" onClick={() => toggleGroup('today')} style={{ cursor: 'pointer' }}>
-                <span>{collapsedGroups.today ? '▶' : '▼'}</span> 📅 Today <span className="gtd-section__count">{todayTasks.length}</span>
-              </h3>
-              {!collapsedGroups.today && (
               <Droppable droppableId="today">
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`gtd-droppable ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}
+                    className={`gtd-section-wrapper ${collapsedGroups.today ? 'gtd-section-wrapper--collapsed' : ''}`}
                   >
-                    {todayTasks.length === 0 ? (
-                      <div className="gtd-empty-state">
-                        <p>今日のタスクはありません</p>
-                        <p className="gtd-empty-state__hint">
-                          右側の「次に取るべき行動」からドラッグ&ドロップで追加
-                        </p>
+                    <h3
+                      className={`gtd-section__title ${snapshot.isDraggingOver && collapsedGroups.today ? 'gtd-section__title--dragging-over' : ''}`}
+                      onClick={() => toggleGroup('today')}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span>{collapsedGroups.today ? '▶' : '▼'}</span> 📅 Today <span className="gtd-section__count">{todayTasks.length}</span>
+                    </h3>
+                    {!collapsedGroups.today && (
+                      <div className={`gtd-droppable ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}>
+                        {todayTasks.length === 0 ? (
+                          <div className="gtd-empty-state">
+                            <p>今日のタスクはありません</p>
+                            <p className="gtd-empty-state__hint">
+                              右側の「次に取るべき行動」からドラッグ&ドロップで追加
+                            </p>
+                          </div>
+                        ) : (
+                          todayTasks.map((task, index) => (
+                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                >
+                                  <TaskCard
+                                    task={task}
+                                    onToggleComplete={handleToggleComplete}
+                                    onOpenTask={handleOpenTask}
+                                    isDragging={snapshot.isDragging}
+                                    showDateLabel={true}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        )}
                       </div>
-                    ) : (
-                      todayTasks.map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                            >
-                              <TaskCard
-                                task={task}
-                                onToggleComplete={handleToggleComplete}
-                                onOpenTask={handleOpenTask}
-                                isDragging={snapshot.isDragging}
-                                showDateLabel={true}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))
                     )}
                     {provided.placeholder}
                   </div>
                 )}
               </Droppable>
-              )}
             </div>
           </div>
 
@@ -346,182 +352,206 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
           <div className="gtd-main-view__right">
             {/* 次に取るべき行動 */}
             <div className="gtd-section">
-              <h3 className="gtd-section__title" onClick={() => toggleGroup('next-action')} style={{ cursor: 'pointer' }}>
-                <span>{collapsedGroups['next-action'] ? '▶' : '▼'}</span> ▶️ 次に取るべき行動 <span className="gtd-section__count">{nextActionTasks.length}</span>
-              </h3>
-              {!collapsedGroups['next-action'] && (
               <Droppable droppableId="next-action">
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}
+                    className={`gtd-section-wrapper ${collapsedGroups['next-action'] ? 'gtd-section-wrapper--collapsed' : ''}`}
                   >
-                    {nextActionTasks.length === 0 ? (
-                      <div className="gtd-empty-state">
-                        <p>タスクがありません</p>
+                    <h3
+                      className={`gtd-section__title ${snapshot.isDraggingOver && collapsedGroups['next-action'] ? 'gtd-section__title--dragging-over' : ''}`}
+                      onClick={() => toggleGroup('next-action')}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span>{collapsedGroups['next-action'] ? '▶' : '▼'}</span> ▶️ 次に取るべき行動 <span className="gtd-section__count">{nextActionTasks.length}</span>
+                    </h3>
+                    {!collapsedGroups['next-action'] && (
+                      <div className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}>
+                        {nextActionTasks.length === 0 ? (
+                          <div className="gtd-empty-state">
+                            <p>タスクがありません</p>
+                          </div>
+                        ) : (
+                          nextActionTasks.map((task, index) => (
+                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                >
+                                  <TaskCard
+                                    task={task}
+                                    onToggleComplete={handleToggleComplete}
+                                    onOpenTask={handleOpenTask}
+                                    isDragging={snapshot.isDragging}
+                                    compact={true}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        )}
                       </div>
-                    ) : (
-                      nextActionTasks.map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                            >
-                              <TaskCard
-                                task={task}
-                                onToggleComplete={handleToggleComplete}
-                                onOpenTask={handleOpenTask}
-                                isDragging={snapshot.isDragging}
-                                compact={true}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))
                     )}
                     {provided.placeholder}
                   </div>
                 )}
               </Droppable>
-              )}
             </div>
 
             {/* Inbox */}
             <div className="gtd-section">
-              <h3 className="gtd-section__title" onClick={() => toggleGroup('inbox')} style={{ cursor: 'pointer' }}>
-                <span>{collapsedGroups.inbox ? '▶' : '▼'}</span> 📥 Inbox <span className="gtd-section__count">{inboxTasks.length}</span>
-              </h3>
-              {!collapsedGroups.inbox && (
               <Droppable droppableId="inbox">
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}
+                    className={`gtd-section-wrapper ${collapsedGroups.inbox ? 'gtd-section-wrapper--collapsed' : ''}`}
                   >
-                    {inboxTasks.length === 0 ? (
-                      <div className="gtd-empty-state">
-                        <p>タスクがありません</p>
+                    <h3
+                      className={`gtd-section__title ${snapshot.isDraggingOver && collapsedGroups.inbox ? 'gtd-section__title--dragging-over' : ''}`}
+                      onClick={() => toggleGroup('inbox')}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span>{collapsedGroups.inbox ? '▶' : '▼'}</span> 📥 Inbox <span className="gtd-section__count">{inboxTasks.length}</span>
+                    </h3>
+                    {!collapsedGroups.inbox && (
+                      <div className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}>
+                        {inboxTasks.length === 0 ? (
+                          <div className="gtd-empty-state">
+                            <p>タスクがありません</p>
+                          </div>
+                        ) : (
+                          inboxTasks.map((task, index) => (
+                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                >
+                                  <TaskCard
+                                    task={task}
+                                    onToggleComplete={handleToggleComplete}
+                                    onOpenTask={handleOpenTask}
+                                    isDragging={snapshot.isDragging}
+                                    compact={true}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        )}
                       </div>
-                    ) : (
-                      inboxTasks.map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                            >
-                              <TaskCard
-                                task={task}
-                                onToggleComplete={handleToggleComplete}
-                                onOpenTask={handleOpenTask}
-                                isDragging={snapshot.isDragging}
-                                compact={true}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))
                     )}
                     {provided.placeholder}
                   </div>
                 )}
               </Droppable>
-              )}
             </div>
 
             {/* 連絡待ち */}
             <div className="gtd-section">
-              <h3 className="gtd-section__title" onClick={() => toggleGroup('waiting')} style={{ cursor: 'pointer' }}>
-                <span>{collapsedGroups.waiting ? '▶' : '▼'}</span> ⏳ 連絡待ち <span className="gtd-section__count">{waitingTasks.length}</span>
-              </h3>
-              {!collapsedGroups.waiting && (
               <Droppable droppableId="waiting">
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}
+                    className={`gtd-section-wrapper ${collapsedGroups.waiting ? 'gtd-section-wrapper--collapsed' : ''}`}
                   >
-                    {waitingTasks.length === 0 ? (
-                      <div className="gtd-empty-state">
-                        <p>タスクがありません</p>
+                    <h3
+                      className={`gtd-section__title ${snapshot.isDraggingOver && collapsedGroups.waiting ? 'gtd-section__title--dragging-over' : ''}`}
+                      onClick={() => toggleGroup('waiting')}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span>{collapsedGroups.waiting ? '▶' : '▼'}</span> ⏳ 連絡待ち <span className="gtd-section__count">{waitingTasks.length}</span>
+                    </h3>
+                    {!collapsedGroups.waiting && (
+                      <div className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}>
+                        {waitingTasks.length === 0 ? (
+                          <div className="gtd-empty-state">
+                            <p>タスクがありません</p>
+                          </div>
+                        ) : (
+                          waitingTasks.map((task, index) => (
+                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                >
+                                  <TaskCard
+                                    task={task}
+                                    onToggleComplete={handleToggleComplete}
+                                    onOpenTask={handleOpenTask}
+                                    isDragging={snapshot.isDragging}
+                                    compact={true}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        )}
                       </div>
-                    ) : (
-                      waitingTasks.map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                            >
-                              <TaskCard
-                                task={task}
-                                onToggleComplete={handleToggleComplete}
-                                onOpenTask={handleOpenTask}
-                                isDragging={snapshot.isDragging}
-                                compact={true}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))
                     )}
                     {provided.placeholder}
                   </div>
                 )}
               </Droppable>
-              )}
             </div>
 
             {/* いつかやる/多分やる */}
             <div className="gtd-section">
-              <h3 className="gtd-section__title" onClick={() => toggleGroup('someday')} style={{ cursor: 'pointer' }}>
-                <span>{collapsedGroups.someday ? '▶' : '▼'}</span> 💭 いつかやる/多分やる <span className="gtd-section__count">{somedayTasks.length}</span>
-              </h3>
-              {!collapsedGroups.someday && (
               <Droppable droppableId="someday">
                 {(provided, snapshot) => (
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}
+                    className={`gtd-section-wrapper ${collapsedGroups.someday ? 'gtd-section-wrapper--collapsed' : ''}`}
                   >
-                    {somedayTasks.length === 0 ? (
-                      <div className="gtd-empty-state">
-                        <p>タスクがありません</p>
+                    <h3
+                      className={`gtd-section__title ${snapshot.isDraggingOver && collapsedGroups.someday ? 'gtd-section__title--dragging-over' : ''}`}
+                      onClick={() => toggleGroup('someday')}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <span>{collapsedGroups.someday ? '▶' : '▼'}</span> 💭 いつかやる/多分やる <span className="gtd-section__count">{somedayTasks.length}</span>
+                    </h3>
+                    {!collapsedGroups.someday && (
+                      <div className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}>
+                        {somedayTasks.length === 0 ? (
+                          <div className="gtd-empty-state">
+                            <p>タスクがありません</p>
+                          </div>
+                        ) : (
+                          somedayTasks.map((task, index) => (
+                            <Draggable key={task.id} draggableId={task.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                >
+                                  <TaskCard
+                                    task={task}
+                                    onToggleComplete={handleToggleComplete}
+                                    onOpenTask={handleOpenTask}
+                                    isDragging={snapshot.isDragging}
+                                    compact={true}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        )}
                       </div>
-                    ) : (
-                      somedayTasks.map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                            >
-                              <TaskCard
-                                task={task}
-                                onToggleComplete={handleToggleComplete}
-                                onOpenTask={handleOpenTask}
-                                isDragging={snapshot.isDragging}
-                                compact={true}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))
                     )}
                     {provided.placeholder}
                   </div>
                 )}
               </Droppable>
-              )}
             </div>
           </div>
         </div>

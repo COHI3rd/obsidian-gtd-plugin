@@ -121,6 +121,27 @@
   transition: all 0.2s;
 }
 
+/* セクションラッパー */
+.gtd-section-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.gtd-section-wrapper--collapsed {
+  /* 閉じている時は通常の表示 */
+}
+
+/* 閉じている時にドラッグオーバーしたタイトル */
+.gtd-section__title--dragging-over {
+  background: linear-gradient(135deg,
+    rgba(109, 179, 242, 0.2) 0%,
+    rgba(142, 195, 243, 0.2) 100%) !important;
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
 .gtd-droppable--dragging-over {
   border-color: var(--interactive-accent) !important;
   background: linear-gradient(135deg,
