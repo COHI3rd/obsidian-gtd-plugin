@@ -261,25 +261,32 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
   // タスク完了トグル
   const handleToggleComplete = async (taskId: string) => {
     try {
+      console.log('[GTDMainView] Toggling task completion:', taskId);
       await taskService.toggleTaskComplete(taskId);
+      console.log('[GTDMainView] Task completion toggled, reloading tasks...');
 
-      // TaskModelインスタンスを保持したまま更新（チカチカを防ぐ）
-      setTasks(prevTasks => {
-        return prevTasks.map(task => {
-          if (task.id === taskId) {
-            // 新しいTaskModelインスタンスを作成して完了状態を反転
-            const updatedTask = new TaskModel({
-              ...task,
-              completed: !task.completed
-            });
-            return updatedTask;
-          }
-          return task;
-        });
-      });
+      // タスク一覧を再読み込みしてプロジェクト進捗も反映
+      await loadTasks();
+      console.log('[GTDMainView] Tasks reloaded');
     } catch (error) {
-      console.error('Failed to toggle task:', error);
+      console.error('[GTDMainView] Failed to toggle task:', error);
       // エラー時は再読み込みして正しい状態に戻す
+      await loadTasks();
+    }
+  };
+
+  // タスクのステータスを変更（右クリックメニュー用）
+  const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
+    try {
+      console.log('[GTDMainView] Changing task status:', taskId, 'to', newStatus);
+      await taskService.changeTaskStatus(taskId, newStatus);
+      console.log('[GTDMainView] Task status changed, reloading tasks...');
+
+      // タスク一覧を再読み込み
+      await loadTasks();
+      console.log('[GTDMainView] Tasks reloaded');
+    } catch (error) {
+      console.error('[GTDMainView] Failed to change task status:', error);
       await loadTasks();
     }
   };
@@ -415,6 +422,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     task={task}
                                     onToggleComplete={handleToggleComplete}
                                     onOpenTask={handleOpenTask}
+                                    onStatusChange={handleStatusChange}
                                     isDragging={snapshot.isDragging}
                                     showDateLabel={true}
                                   />
@@ -478,6 +486,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     task={task}
                                     onToggleComplete={handleToggleComplete}
                                     onOpenTask={handleOpenTask}
+                                    onStatusChange={handleStatusChange}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
                                   />
@@ -529,6 +538,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     task={task}
                                     onToggleComplete={handleToggleComplete}
                                     onOpenTask={handleOpenTask}
+                                    onStatusChange={handleStatusChange}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
                                   />
@@ -580,6 +590,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     task={task}
                                     onToggleComplete={handleToggleComplete}
                                     onOpenTask={handleOpenTask}
+                                    onStatusChange={handleStatusChange}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
                                   />
@@ -631,6 +642,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     task={task}
                                     onToggleComplete={handleToggleComplete}
                                     onOpenTask={handleOpenTask}
+                                    onStatusChange={handleStatusChange}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
                                   />

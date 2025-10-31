@@ -10,6 +10,7 @@ interface ProjectCardProps {
   onStatusChange?: (project: Project, status: ProjectStatus) => void;
   onImportanceChange?: (project: Project, importance: number) => void;
   onTaskClick?: (task: Task) => void;
+  onTaskToggleComplete?: (task: Task) => void;
 }
 
 /**
@@ -22,7 +23,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onClick,
   onStatusChange,
   onImportanceChange,
-  onTaskClick
+  onTaskClick,
+  onTaskToggleComplete
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const getStatusLabel = () => {
@@ -166,15 +168,26 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
             <div
               key={task.id}
               className={`gtd-project-card__task ${task.completed ? 'gtd-project-card__task--completed' : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                onTaskClick?.(task);
-              }}
             >
-              <span className="gtd-project-card__task-checkbox">
+              <span
+                className="gtd-project-card__task-checkbox"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTaskToggleComplete?.(task);
+                }}
+                style={{ cursor: onTaskToggleComplete ? 'pointer' : 'default' }}
+              >
                 {task.completed ? '✓' : '○'}
               </span>
-              <span className="gtd-project-card__task-title">{task.title}</span>
+              <span
+                className="gtd-project-card__task-title"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onTaskClick?.(task);
+                }}
+              >
+                {task.title}
+              </span>
             </div>
           ))}
         </div>

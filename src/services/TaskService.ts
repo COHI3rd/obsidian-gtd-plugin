@@ -152,12 +152,15 @@ export class TaskService {
    */
   async updateTask(task: Task, oldProject?: string): Promise<void> {
     await ErrorHandler.tryCatch(async () => {
+      console.log('[TaskService] Updating task:', task.id, task.title, 'completed:', task.completed, 'project:', task.project);
+
       // バリデーション
       if (!task.title || task.title.trim() === '') {
         throw new GTDError(ErrorType.VALIDATION_ERROR, 'タスクのタイトルは必須です');
       }
 
       await this.fileService.updateTask(task);
+      console.log('[TaskService] Task file updated');
 
       // プロジェクトの変更を処理
       if (this.projectService) {
@@ -186,10 +189,12 @@ export class TaskService {
 
         // プロジェクトが変更された、またはタスクにプロジェクトがある場合、進捗を更新
         if (projectChanged || task.project) {
+          console.log('[TaskService] Updating project progress for task with project:', task.project);
           const allTasks = await this.getAllTasks();
           await this.projectService.updateAllProjectsProgress(allTasks);
         }
       }
+      console.log('[TaskService] Task update complete');
     }, 'タスクの更新');
   }
 

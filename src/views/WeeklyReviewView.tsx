@@ -36,6 +36,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
   const [somedayTasks, setSomedayTasks] = useState<Task[]>([]);
   const [waitingTasks, setWaitingTasks] = useState<Task[]>([]);
   const [activeProjects, setActiveProjects] = useState<Project[]>([]);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [completedThisWeek, setCompletedThisWeek] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSection, setSelectedSection] = useState<'someday' | 'waiting' | 'projects' | 'completed'>('completed');
@@ -46,14 +47,15 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       setLoading(true);
 
       // タスクを読み込み
-      const allTasks = await taskService.getAllTasks();
+      const tasks = await taskService.getAllTasks();
+      setAllTasks(tasks);
 
       // いつかやる/多分やるタスク（未完了のみ）
-      const someday = allTasks.filter(t => t.status === 'someday' && !t.completed);
+      const someday = tasks.filter(t => t.status === 'someday' && !t.completed);
       setSomedayTasks(someday);
 
       // 連絡待ちタスク（未完了のみ）
-      const waiting = allTasks.filter(t => t.status === 'waiting' && !t.completed);
+      const waiting = tasks.filter(t => t.status === 'waiting' && !t.completed);
       setWaitingTasks(waiting);
 
       // 進行中のプロジェクトを読み込み
@@ -64,7 +66,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       // 今週完了したタスクを抽出
       const now = new Date();
       const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const completed = allTasks.filter(t => {
+      const completed = tasks.filter(t => {
         if (!t.completed) return false;
         // 完了日が今週以内（dateフィールドを完了日として使用）
         if (t.date && t.date >= oneWeekAgo && t.date <= now) {
@@ -131,6 +133,22 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       onRefresh?.();
     } catch (error) {
       console.error('Failed to move task to inbox:', error);
+    }
+  };
+
+  // タスクの完了状態を切り替え
+  const handleTaskToggleComplete = async (task: Task) => {
+    try {
+      console.log('[WeeklyReview] Toggling task:', task.id, task.title, 'current completed:', task.completed);
+      task.completed ? task.uncomplete() : task.complete();
+      console.log('[WeeklyReview] New completed state:', task.completed);
+      await taskService.updateTask(task);
+      console.log('[WeeklyReview] Task updated, reloading...');
+      await loadData();
+      onRefresh?.();
+      console.log('[WeeklyReview] Data reloaded');
+    } catch (error) {
+      console.error('[WeeklyReview] Failed to toggle task completion:', error);
     }
   };
 
@@ -358,19 +376,30 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
             </div>
           ) : (
             <div className="gtd-weekly-review__projects">
-              {activeProjects.map(project => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  onClick={async () => {
-                    // プロジェクトファイルを開く
-                    const file = fileService.getApp().vault.getAbstractFileByPath(project.filePath);
-                    if (file) {
-                      await fileService.getApp().workspace.getLeaf(false).openFile(file as any);
-                    }
-                  }}
-                />
-              ))}
+              {activeProjects.map(project => {
+                // このプロジェクトに関連するタスク
+                const relatedTasks = allTasks.filter(t => {
+                  const projectLink = `[[${project.title}]]`;
+                  return t.project === projectLink;
+                });
+
+                return (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    tasks={relatedTasks}
+                    onClick={async () => {
+                      // プロジェクトファイルを開く
+                      const file = fileService.getApp().vault.getAbstractFileByPath(project.filePath);
+                      if (file) {
+                        await fileService.getApp().workspace.getLeaf(false).openFile(file as any);
+                      }
+                    }}
+                    onTaskClick={(task) => fileService.openFile(task.filePath)}
+                    onTaskToggleComplete={handleTaskToggleComplete}
+                  />
+                );
+              })}
             </div>
           )}
         </div>

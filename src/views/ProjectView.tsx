@@ -150,6 +150,22 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
     }
   };
 
+  // タスクの完了状態を切り替え
+  const handleTaskToggleComplete = async (task: Task) => {
+    try {
+      console.log('[ProjectView] Toggling task:', task.id, task.title, 'current completed:', task.completed);
+      const newCompletedState = !task.completed;
+      task.completed ? task.uncomplete() : task.complete();
+      console.log('[ProjectView] New completed state:', task.completed);
+      await taskService.updateTask(task);
+      console.log('[ProjectView] Task updated in file, reloading...');
+      await loadData();
+      console.log('[ProjectView] Data reloaded');
+    } catch (error) {
+      console.error('[ProjectView] Failed to toggle task completion:', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="gtd-project-view">
@@ -250,6 +266,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                   onStatusChange={handleStatusChange}
                   onImportanceChange={handleImportanceChange}
                   onTaskClick={(task) => fileService.openFile(task.filePath)}
+                  onTaskToggleComplete={handleTaskToggleComplete}
                 />
               </div>
             );
