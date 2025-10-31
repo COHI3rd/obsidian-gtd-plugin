@@ -5,6 +5,7 @@ import { GTDSettings } from './types';
 import { DEFAULT_SETTINGS, GTDSettingTab } from './settings';
 import { FileService } from './services/FileService';
 import { TaskService } from './services/TaskService';
+import { DailyNoteService } from './services/DailyNoteService';
 import { GTDMainView } from './views/GTDMainView';
 
 const VIEW_TYPE_GTD = 'gtd-main-view';
@@ -16,6 +17,8 @@ class GTDView extends ItemView {
   private root: ReactDOM.Root | null = null;
   private taskService: TaskService;
   private fileService: FileService;
+  private dailyNoteService: DailyNoteService;
+  public refreshCallback: (() => void) | null = null;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -24,6 +27,15 @@ class GTDView extends ItemView {
     super(leaf);
     this.fileService = new FileService(this.app, plugin.settings);
     this.taskService = new TaskService(this.fileService);
+    this.dailyNoteService = new DailyNoteService(this.app, plugin.settings);
+    this.taskService.setDailyNoteService(this.dailyNoteService);
+  }
+
+  /**
+   * リフレッシュコールバックを設定
+   */
+  setRefreshCallback(callback: () => void): void {
+    this.refreshCallback = callback;
   }
 
   getViewType(): string {
@@ -42,11 +54,34 @@ class GTDView extends ItemView {
     const container = this.containerEl.children[1];
     container.empty();
 
+    // デイリーノート挿入ハンドラ
+    const handleInsertToDailyNote = async () => {
+      console.log('handleInsertToDailyNote called');
+      const allTasks = await this.taskService.getAllTasks();
+      console.log('All tasks:', allTasks.length);
+
+      const todayCompletedTasks = allTasks.filter(task => {
+        const isToday = task.isToday();
+        const isCompleted = task.completed;
+        console.log(`Task: ${task.title}, isToday: ${isToday}, completed: ${isCompleted}`);
+        return isToday && isCompleted;
+      });
+
+      console.log('Today completed tasks:', todayCompletedTasks.length);
+      await this.dailyNoteService.insertCompletedTasksCommand(todayCompletedTasks);
+    };
+
     // Reactアプリをマウント
     this.root = ReactDOM.createRoot(container);
     this.root.render(
       <React.StrictMode>
-        <GTDMainView taskService={this.taskService} fileService={this.fileService} />
+        <GTDMainView
+          taskService={this.taskService}
+          fileService={this.fileService}
+          settings={this.plugin.settings}
+          onMounted={(refreshFn) => this.setRefreshCallback(refreshFn)}
+          onInsertToDailyNote={handleInsertToDailyNote}
+        />
       </React.StrictMode>
     );
   }
@@ -66,6 +101,7 @@ class GTDView extends ItemView {
 export default class GTDPlugin extends Plugin {
   settings!: GTDSettings;
   private taskService: TaskService | null = null;
+  private dailyNoteService: DailyNoteService | null = null;
 
   async onload(): Promise<void> {
     console.log('Loading GTD Plugin');
@@ -76,6 +112,8 @@ export default class GTDPlugin extends Plugin {
     // サービスを初期化
     const fileService = new FileService(this.app, this.settings);
     this.taskService = new TaskService(fileService);
+    this.dailyNoteService = new DailyNoteService(this.app, this.settings);
+    this.taskService.setDailyNoteService(this.dailyNoteService);
 
     // ビューを登録
     this.registerView(VIEW_TYPE_GTD, (leaf) => new GTDView(leaf, this));
@@ -104,6 +142,22 @@ export default class GTDPlugin extends Plugin {
       },
     });
 
+    // コマンド: 今日の完了タスクをデイリーノートに挿入
+    this.addCommand({
+      id: 'gtd-insert-completed-tasks',
+      name: '今日の完了タスクをデイリーノートに挿入',
+      callback: async () => {
+        if (!this.taskService || !this.dailyNoteService) {
+          return;
+        }
+
+        const allTasks = await this.taskService.getAllTasks();
+        const todayCompletedTasks = allTasks.filter(task => task.isToday() && task.completed);
+
+        await this.dailyNoteService.insertCompletedTasksCommand(todayCompletedTasks);
+      },
+    });
+
     // コマンド: 今日のタスクを表示
     this.addCommand({
       id: 'gtd-show-today',
@@ -119,7 +173,48 @@ export default class GTDPlugin extends Plugin {
     // 設定タブを追加
     this.addSettingTab(new GTDSettingTab(this.app, this));
 
+    // ファイル変更イベントを監視
+    this.registerEvent(
+      this.app.vault.on('modify', (file) => {
+        // タスクフォルダ内のファイルが変更された場合、ビューをリフレッシュ
+        if (file.path.startsWith(this.settings.taskFolder)) {
+          this.refreshActiveView();
+        }
+      })
+    );
+
+    this.registerEvent(
+      this.app.vault.on('delete', (file) => {
+        // タスクフォルダ内のファイルが削除された場合、ビューをリフレッシュ
+        if (file.path.startsWith(this.settings.taskFolder)) {
+          this.refreshActiveView();
+        }
+      })
+    );
+
+    this.registerEvent(
+      this.app.vault.on('rename', (file, oldPath) => {
+        // タスクフォルダ内のファイルが移動/リネームされた場合、ビューをリフレッシュ
+        if (file.path.startsWith(this.settings.taskFolder) || oldPath.startsWith(this.settings.taskFolder)) {
+          this.refreshActiveView();
+        }
+      })
+    );
+
     console.log('GTD Plugin loaded successfully');
+  }
+
+  /**
+   * アクティブなGTDビューをリフレッシュ
+   */
+  private refreshActiveView(): void {
+    const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_GTD);
+    leaves.forEach((leaf) => {
+      const view = leaf.view;
+      if (view instanceof GTDView && view.refreshCallback) {
+        view.refreshCallback();
+      }
+    });
   }
 
   async onunload(): Promise<void> {

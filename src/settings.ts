@@ -12,6 +12,10 @@ export const DEFAULT_SETTINGS: GTDSettings = {
   dateFormat: 'yyyy-MM-dd',
   enableAutoDate: true,
   defaultPriority: 'medium',
+  taskSortMode: 'manual',
+  dailyNoteMode: 'command',
+  dailyNoteFolder: '',
+  dailyNoteDateFormat: 'YYYY-MM-DD',
 };
 
 /**
@@ -114,6 +118,70 @@ export class GTDSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.defaultPriority)
           .onChange(async (value: any) => {
             this.plugin.settings.defaultPriority = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    // タスク並び替えモード
+    new Setting(containerEl)
+      .setName('タスク並び替えモード')
+      .setDesc('タスクの表示順序を手動で並び替えるか、自動でソートするか')
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions({
+            manual: '手動並び替え（ドラッグで順序変更）',
+            auto: '自動並び替え（優先度・日付順）',
+          })
+          .setValue(this.plugin.settings.taskSortMode)
+          .onChange(async (value: any) => {
+            this.plugin.settings.taskSortMode = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    // デイリーノート連携
+    containerEl.createEl('h3', { text: 'デイリーノート連携' });
+
+    new Setting(containerEl)
+      .setName('連携モード')
+      .setDesc('完了タスクをデイリーノートに反映する方法を選択')
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions({
+            none: 'なし（連携しない）',
+            'auto-write': '自動書き込み（完了時にデイリーノートに追記）',
+            dataview: 'Dataview参照（推奨）',
+            command: 'コマンド実行（手動で挿入）',
+          })
+          .setValue(this.plugin.settings.dailyNoteMode)
+          .onChange(async (value: any) => {
+            this.plugin.settings.dailyNoteMode = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName('デイリーノートフォルダ')
+      .setDesc('デイリーノートが保存されているフォルダ（空欄の場合はVaultルート）')
+      .addText((text) =>
+        text
+          .setPlaceholder('Daily Notes')
+          .setValue(this.plugin.settings.dailyNoteFolder)
+          .onChange(async (value) => {
+            this.plugin.settings.dailyNoteFolder = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName('デイリーノート日付フォーマット')
+      .setDesc('デイリーノートのファイル名に使用される日付フォーマット（例: YYYY-MM-DD, YYYY年MM月DD日）※YYYY/yyyyどちらも対応')
+      .addText((text) =>
+        text
+          .setPlaceholder('YYYY-MM-DD')
+          .setValue(this.plugin.settings.dailyNoteDateFormat)
+          .onChange(async (value) => {
+            this.plugin.settings.dailyNoteDateFormat = value;
             await this.plugin.saveSettings();
           })
       );

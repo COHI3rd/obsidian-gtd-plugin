@@ -16,6 +16,7 @@ export class TaskModel implements Task {
   notes: string;
   body: string;
   filePath: string;
+  order: number;
 
   constructor(data: Partial<Task>) {
     this.id = data.id || '';
@@ -29,6 +30,7 @@ export class TaskModel implements Task {
     this.notes = data.notes || '';
     this.body = data.body || '';
     this.filePath = data.filePath || '';
+    this.order = data.order ?? 0;
   }
 
   /**

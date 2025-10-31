@@ -2,19 +2,52 @@ import { Task, TaskStatus, TaskPriority } from '../types';
 import { TaskModel } from '../models/Task';
 import { FileService } from './FileService';
 import { DateManager } from '../utils/DateManager';
+import { DailyNoteService } from './DailyNoteService';
 
 /**
  * タスク操作サービス
  * タスクのCRUDとビジネスロジックを提供
  */
 export class TaskService {
+  private dailyNoteService?: DailyNoteService;
+
   constructor(private fileService: FileService) {}
+
+  /**
+   * デイリーノートサービスを設定
+   */
+  setDailyNoteService(service: DailyNoteService): void {
+    this.dailyNoteService = service;
+  }
 
   /**
    * 全タスクを取得
    */
   async getAllTasks(): Promise<Task[]> {
-    return await this.fileService.getAllTasks();
+    const tasks = await this.fileService.getAllTasks();
+
+    // 前日から残ったTodayタスク（未完了）を今日の日付に自動更新
+    await this.updateOverdueTodayTasks(tasks);
+
+    return tasks;
+  }
+
+  /**
+   * 前日から残ったTodayタスクを今日の日付に更新
+   */
+  private async updateOverdueTodayTasks(tasks: Task[]): Promise<void> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (const task of tasks) {
+      // 未完了 && 日付が設定されている && 過去の日付 && todayステータス
+      if (!task.completed && task.date && task.date < today && task.status === 'today') {
+        const taskModel = new TaskModel(task);
+        taskModel.setDate(new Date()); // 今日の日付に更新
+        await this.fileService.updateTask(taskModel);
+        console.log(`Updated overdue today task: ${task.title} from ${task.date} to today`);
+      }
+    }
   }
 
   /**
@@ -101,10 +134,21 @@ export class TaskService {
     }
 
     const taskModel = new TaskModel(task);
+    const wasCompleted = taskModel.completed;
+
     if (taskModel.completed) {
       taskModel.uncomplete();
     } else {
       taskModel.complete();
+      // 完了時に日付がない場合は今日の日付を設定
+      if (!taskModel.date) {
+        taskModel.setDate(DateManager.getToday());
+      }
+
+      // デイリーノートに自動書き込み（設定がauto-writeの場合）
+      if (this.dailyNoteService && !wasCompleted) {
+        await this.dailyNoteService.writeCompletedTaskToDailyNote(taskModel);
+      }
     }
 
     await this.fileService.updateTask(taskModel);
@@ -121,6 +165,15 @@ export class TaskService {
 
     const taskModel = new TaskModel(task);
     taskModel.changeStatus(newStatus);
+
+    // inbox または next-action に移動する場合は日付をクリアし、完了フラグも解除
+    if (newStatus === 'inbox' || newStatus === 'next-action' || newStatus === 'waiting' || newStatus === 'someday') {
+      taskModel.setDate(null as any);
+      // 完了状態から未完了に戻す
+      if (taskModel.completed) {
+        taskModel.uncomplete();
+      }
+    }
 
     await this.fileService.updateTask(taskModel);
   }

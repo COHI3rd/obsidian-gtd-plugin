@@ -1,5 +1,46 @@
 # インストールガイド
 
+## 手動インストール（推奨）
+
+### 1. 必要なファイルを取得
+
+以下の3つのファイルが必要です：
+- `main.js` - プラグインのメインファイル（必須）
+- `manifest.json` - プラグインの設定ファイル（必須）
+- `styles.css` - プラグインのスタイルシート（必須）
+
+### 2. プラグインフォルダを作成
+
+Obsidian Vaultのプラグインフォルダに移動します：
+
+```
+[あなたのVaultフォルダ]\.obsidian\plugins\obsidian-gtd\
+```
+
+例：
+```
+C:\Users\user000\Documents\MyVault\.obsidian\plugins\obsidian-gtd\
+```
+
+**フォルダが存在しない場合は作成してください。**
+
+### 3. ファイルを配置
+
+上記3つのファイルをプラグインフォルダにコピーします：
+
+```
+[Vault]\.obsidian\plugins\obsidian-gtd\
+├── main.js
+├── manifest.json
+└── styles.css
+```
+
+### 4. Obsidianで有効化
+
+1. **Obsidianを再起動**（Ctrl + R でリロード）
+2. `設定` → `コミュニティプラグイン` → `インストール済みプラグイン`
+3. 「GTD Task Manager」を有効化
+
 ## 開発環境でのセットアップ
 
 ### 1. 前提条件
@@ -34,9 +75,25 @@ npm run dev
 npm run build
 ```
 
-### 5. Obsidianで有効化
+**重要**: ビルド後、以下の3つのファイルが生成されます：
+- `main.js`
+- `styles.css`（自動生成）
+- `manifest.json`
 
-1. Obsidianを再起動
+### 5. ファイルをVaultにコピー
+
+開発フォルダで作業している場合、ビルド後に生成されたファイルを**実際のVaultのプラグインフォルダ**にコピーする必要があります：
+
+```bash
+# 例（Windowsの場合）
+cp main.js "C:\Users\user000\Documents\MyVault\.obsidian\plugins\obsidian-gtd\"
+cp styles.css "C:\Users\user000\Documents\MyVault\.obsidian\plugins\obsidian-gtd\"
+cp manifest.json "C:\Users\user000\Documents\MyVault\.obsidian\plugins\obsidian-gtd\"
+```
+
+### 6. Obsidianで有効化
+
+1. Obsidianを再起動（Ctrl + R）
 2. `設定` → `コミュニティプラグイン` → `インストール済みプラグイン`
 3. 「GTD Task Manager」を有効化
 
@@ -73,10 +130,16 @@ completed: false
 priority: medium
 tags: [仕事, メール]
 notes: 午前中に返信する
+order: 0
 ---
 
 山田さんからのメールに返信する
 ```
+
+**注意**:
+- `order`フィールドは手動並び替えモードで使用されます
+- 設定で自動並び替えモードに切り替えている場合は不要です
+- 前日から残ったTodayタスク（未完了）は、翌日自動的に今日の日付に更新されます
 
 ### プロジェクトファイルのサンプル
 
@@ -150,12 +213,37 @@ npm run build
 
 ### Obsidianでプラグインが認識されない
 
-1. `.obsidian/plugins/obsidian-gtd-plugin/` フォルダに以下のファイルがあるか確認:
-   - `main.js`
-   - `manifest.json`
-   - `styles.css`（ビルド後に生成される）
+1. `.obsidian/plugins/obsidian-gtd/` フォルダに以下の**3つのファイル全て**があるか確認:
+   - ✅ `main.js` （346KB程度）
+   - ✅ `manifest.json` （389B程度）
+   - ✅ `styles.css` （11KB程度）
 
-2. Obsidianを完全に再起動
+2. ファイルのタイムスタンプが最新か確認（古いファイルが残っている可能性）
+
+3. Obsidianを完全に再起動（Ctrl + R）
+
+4. それでも認識されない場合、開発者コンソール（Ctrl + Shift + I）でエラーを確認
+
+### 変更が反映されない
+
+開発中に変更が反映されない場合：
+
+1. **ビルドを実行**:
+   ```bash
+   npm run build
+   ```
+
+2. **生成されたファイルをVaultにコピー**:
+   ```bash
+   # main.js, styles.css, manifest.json の3つを必ずコピー
+   cp main.js styles.css manifest.json "[Vaultパス]\.obsidian\plugins\obsidian-gtd\"
+   ```
+
+3. **Obsidianでリロード**: Ctrl + R
+
+4. **キャッシュクリア**:
+   - Obsidianの設定 → コミュニティプラグイン → プラグインを無効化
+   - 再度有効化
 
 ### ドラッグ&ドロップが動作しない
 

@@ -32,6 +32,7 @@ export class TaskParser {
         notes: fm.notes || '',
         body: body.trim(),
         filePath,
+        order: fm.order ?? 0,
       });
     } catch (error) {
       console.error('Failed to parse task file:', filePath, error);
@@ -60,6 +61,7 @@ export class TaskParser {
       priority: task.priority,
       tags: task.tags.length > 0 ? task.tags : undefined,
       notes: task.notes || undefined,
+      order: task.order ?? undefined,
     };
 
     // undefinedのプロパティを除去

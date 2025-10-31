@@ -35,6 +35,7 @@ export interface Task {
   notes: string;
   body: string;                  // Markdown本文
   filePath: string;              // Vault内のファイルパス
+  order: number;                 // 手動並び替え用の順序
 
   // メソッド
   isToday(): boolean;
@@ -97,6 +98,7 @@ export interface TaskFrontmatter {
   priority?: TaskPriority;
   tags?: string[];
   notes?: string;
+  order?: number;
 }
 
 /**
@@ -122,6 +124,11 @@ export interface WeeklyReviewFrontmatter {
 }
 
 /**
+ * デイリーノート連携モード
+ */
+export type DailyNoteMode = 'none' | 'auto-write' | 'dataview' | 'command';
+
+/**
  * プラグイン設定
  */
 export interface GTDSettings {
@@ -131,4 +138,8 @@ export interface GTDSettings {
   dateFormat: string;            // 日付フォーマット
   enableAutoDate: boolean;       // 自動日付入力
   defaultPriority: TaskPriority; // デフォルト優先度
+  taskSortMode: 'manual' | 'auto'; // タスク並び替えモード
+  dailyNoteMode: DailyNoteMode;  // デイリーノート連携モード
+  dailyNoteFolder: string;       // デイリーノートフォルダ
+  dailyNoteDateFormat: string;   // デイリーノートの日付フォーマット
 }
