@@ -3,6 +3,7 @@ import { Project, Task } from '../types';
 import { ProjectModel } from '../models/Project';
 import { GTDSettings } from '../types';
 import { ProjectCalculator } from '../utils/ProjectCalculator';
+import { ErrorHandler, GTDError, ErrorType } from '../utils/ErrorHandler';
 import matter from 'gray-matter';
 
 /**
@@ -52,7 +53,12 @@ export class ProjectService {
     deadline?: Date;
     actionPlan?: string;
   }): Promise<Project> {
-    try {
+    const result = await ErrorHandler.tryCatch(async () => {
+      // バリデーション
+      if (!data.title || data.title.trim() === '') {
+        throw new GTDError(ErrorType.VALIDATION_ERROR, 'プロジェクトのタイトルは必須です');
+      }
+
       const fileName = `${data.title.replace(/[/\\:*?"<>|]/g, '_')}.md`;
       const filePath = `${this.settings.projectFolder}/${fileName}`;
 
@@ -73,13 +79,14 @@ export class ProjectService {
       const content = this.stringifyProject(project);
       await this.app.vault.create(filePath, content);
 
-      new Notice(`プロジェクト「${project.title}」を作成しました`);
+      ErrorHandler.success(`プロジェクト「${project.title}」を作成しました`);
       return project;
-    } catch (error) {
-      console.error('Failed to create project:', error);
-      new Notice('プロジェクトの作成に失敗しました');
-      throw error;
+    }, 'プロジェクトの作成');
+
+    if (!result) {
+      throw new Error('Failed to create project');
     }
+    return result;
   }
 
   /**
@@ -147,6 +154,91 @@ export class ProjectService {
     } catch (error) {
       console.error('Failed to parse project:', error);
       return null;
+    }
+  }
+
+  /**
+   * プロジェクトにタスクのリンクを追加
+   */
+  async addTaskLinkToProject(projectTitle: string, taskFilePath: string): Promise<void> {
+    try {
+      const projects = await this.getAllProjects();
+      const project = projects.find(p => p.title === projectTitle);
+
+      if (!project) {
+        console.warn(`Project not found: ${projectTitle}`);
+        return;
+      }
+
+      const file = this.app.vault.getAbstractFileByPath(project.filePath);
+      if (!file || !(file instanceof TFile)) {
+        console.warn(`Project file not found: ${project.filePath}`);
+        return;
+      }
+
+      const content = await this.app.vault.read(file);
+      const { data, content: body } = matter(content);
+
+      // タスクファイル名を取得（拡張子なし）
+      const taskFileName = taskFilePath.split('/').pop()?.replace('.md', '') || taskFilePath;
+      const taskLink = `- [[${taskFileName}]]`;
+
+      // 既に同じリンクが存在するかチェック
+      if (body.includes(taskLink)) {
+        return;
+      }
+
+      // タスクセクションを探すか作成
+      let newBody = body;
+      const tasksHeaderRegex = /^##\s+タスク\s*$/m;
+
+      if (tasksHeaderRegex.test(body)) {
+        // "## タスク" セクションが存在する場合、その下に追加
+        newBody = body.replace(tasksHeaderRegex, `## タスク\n${taskLink}`);
+      } else {
+        // セクションが存在しない場合は新規作成
+        newBody = body.trim() + '\n\n## タスク\n' + taskLink;
+      }
+
+      const newContent = matter.stringify(newBody, data);
+      await this.app.vault.modify(file, newContent);
+    } catch (error) {
+      console.error('Failed to add task link to project:', error);
+    }
+  }
+
+  /**
+   * プロジェクトからタスクのリンクを削除
+   */
+  async removeTaskLinkFromProject(projectTitle: string, taskFilePath: string): Promise<void> {
+    try {
+      const projects = await this.getAllProjects();
+      const project = projects.find(p => p.title === projectTitle);
+
+      if (!project) {
+        return;
+      }
+
+      const file = this.app.vault.getAbstractFileByPath(project.filePath);
+      if (!file || !(file instanceof TFile)) {
+        return;
+      }
+
+      const content = await this.app.vault.read(file);
+      const { data, content: body } = matter(content);
+
+      const taskFileName = taskFilePath.split('/').pop()?.replace('.md', '') || taskFilePath;
+      const taskLink = `- [[${taskFileName}]]`;
+
+      // リンクを削除
+      const newBody = body.split('\n')
+        .filter(line => !line.includes(taskLink))
+        .join('\n');
+
+      const newContent = matter.stringify(newBody, data);
+      await this.app.vault.modify(file, newContent);
+    } catch (error) {
+      console.error('Failed to remove task link from project:', error);
     }
   }
 

@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { TaskStatus, TaskPriority } from '../types';
+import { TaskStatus, TaskPriority, Project } from '../types';
 
 interface QuickAddModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (title: string, status: TaskStatus, priority: TaskPriority) => void;
+  onSubmit: (title: string, status: TaskStatus, priority: TaskPriority, project?: string) => void;
+  projects?: Project[];
 }
 
 /**
@@ -15,10 +16,12 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
+  projects = [],
 }) => {
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState<TaskStatus>('inbox');
   const [priority, setPriority] = useState<TaskPriority>('medium');
+  const [project, setProject] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   // モーダルが開いたら入力欄にフォーカス
@@ -31,10 +34,11 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (title.trim()) {
-      onSubmit(title.trim(), status, priority);
+      onSubmit(title.trim(), status, priority, project || undefined);
       setTitle('');
       setStatus('inbox');
       setPriority('medium');
+      setProject('');
       onClose();
     }
   };
@@ -106,6 +110,24 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
               <option value="low">低</option>
               <option value="medium">中</option>
               <option value="high">高</option>
+            </select>
+          </div>
+
+          {/* プロジェクト選択 */}
+          <div className="gtd-form-group">
+            <label htmlFor="task-project">プロジェクト</label>
+            <select
+              id="task-project"
+              value={project}
+              onChange={(e) => setProject(e.target.value)}
+              className="gtd-select"
+            >
+              <option value="">なし</option>
+              {projects.map((p) => (
+                <option key={p.id} value={`[[${p.title}]]`}>
+                  {p.title}
+                </option>
+              ))}
             </select>
           </div>
 

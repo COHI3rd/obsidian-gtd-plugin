@@ -3,6 +3,7 @@ import { TaskModel } from '../models/Task';
 import { FileService } from './FileService';
 import { DateManager } from '../utils/DateManager';
 import { DailyNoteService } from './DailyNoteService';
+import { ErrorHandler, GTDError, ErrorType } from '../utils/ErrorHandler';
 
 /**
  * タスク操作サービス
@@ -10,6 +11,7 @@ import { DailyNoteService } from './DailyNoteService';
  */
 export class TaskService {
   private dailyNoteService?: DailyNoteService;
+  private projectService?: any; // ProjectService型は循環参照を避けるためany
 
   constructor(private fileService: FileService) {}
 
@@ -21,15 +23,24 @@ export class TaskService {
   }
 
   /**
+   * プロジェクトサービスを設定
+   */
+  setProjectService(service: any): void {
+    this.projectService = service;
+  }
+
+  /**
    * 全タスクを取得
    */
   async getAllTasks(): Promise<Task[]> {
-    const tasks = await this.fileService.getAllTasks();
+    return await ErrorHandler.tryCatch(async () => {
+      const tasks = await this.fileService.getAllTasks();
 
-    // 前日から残ったTodayタスク（未完了）を今日の日付に自動更新
-    await this.updateOverdueTodayTasks(tasks);
+      // 前日から残ったTodayタスク（未完了）を今日の日付に自動更新
+      await this.updateOverdueTodayTasks(tasks);
 
-    return tasks;
+      return tasks;
+    }, 'タスク一覧の取得') || [];
   }
 
   /**
@@ -93,35 +104,93 @@ export class TaskService {
     project?: string;
     date?: Date;
   }): Promise<Task> {
-    const task = new TaskModel({
-      id: Date.now().toString(),
-      title: data.title,
-      status: data.status || 'inbox',
-      priority: data.priority || 'medium',
-      project: data.project || null,
-      date: data.date || null,
-      completed: false,
-      tags: [],
-      notes: '',
-      body: '',
-      filePath: '',
-    });
+    const result = await ErrorHandler.tryCatch(async () => {
+      // バリデーション
+      if (!data.title || data.title.trim() === '') {
+        throw new GTDError(ErrorType.VALIDATION_ERROR, 'タスクのタイトルは必須です');
+      }
 
-    await this.fileService.createTask(task);
-    return task;
+      const task = new TaskModel({
+        id: Date.now().toString(),
+        title: data.title,
+        status: data.status || 'inbox',
+        priority: data.priority || 'medium',
+        project: data.project || null,
+        date: data.date || null,
+        completed: false,
+        tags: [],
+        notes: '',
+        body: '',
+        filePath: '',
+      });
+
+      const createdFilePath = await this.fileService.createTask(task);
+      task.filePath = createdFilePath;
+
+      // プロジェクトが指定されている場合、プロジェクトファイルにタスクリンクを追加
+      if (task.project && this.projectService) {
+        const projectTitle = task.project.replace(/^\[\[/, '').replace(/\]\]$/, '');
+        await this.projectService.addTaskLinkToProject(projectTitle, createdFilePath);
+
+        // プロジェクト進捗を更新
+        const allTasks = await this.getAllTasks();
+        await this.projectService.updateAllProjectsProgress(allTasks);
+      }
+
+      ErrorHandler.success('タスクを作成しました');
+      return task;
+    }, 'タスクの作成');
+
+    if (!result) {
+      throw new Error('Failed to create task');
+    }
+    return result;
   }
 
   /**
    * タスクを更新
    */
-  async updateTask(task: Task): Promise<void> {
-    // バリデーション
-    const validation = TaskParser.validate(task);
-    if (!validation.valid) {
-      throw new Error(`Invalid task: ${validation.errors.join(', ')}`);
-    }
+  async updateTask(task: Task, oldProject?: string): Promise<void> {
+    await ErrorHandler.tryCatch(async () => {
+      // バリデーション
+      if (!task.title || task.title.trim() === '') {
+        throw new GTDError(ErrorType.VALIDATION_ERROR, 'タスクのタイトルは必須です');
+      }
 
-    await this.fileService.updateTask(task);
+      await this.fileService.updateTask(task);
+
+      // プロジェクトの変更を処理
+      if (this.projectService) {
+        let projectChanged = false;
+
+        // 古いプロジェクトから削除
+        if (oldProject && oldProject !== task.project) {
+          const oldProjectTitle = oldProject.replace(/^\[\[/, '').replace(/\]\]$/, '');
+          await this.projectService.removeTaskLinkFromProject(oldProjectTitle, task.filePath);
+          projectChanged = true;
+        }
+
+        // 新しいプロジェクトに追加
+        if (task.project && task.project !== oldProject) {
+          const newProjectTitle = task.project.replace(/^\[\[/, '').replace(/\]\]$/, '');
+          await this.projectService.addTaskLinkToProject(newProjectTitle, task.filePath);
+          projectChanged = true;
+        }
+
+        // プロジェクトが削除された場合
+        if (oldProject && !task.project) {
+          const oldProjectTitle = oldProject.replace(/^\[\[/, '').replace(/\]\]$/, '');
+          await this.projectService.removeTaskLinkFromProject(oldProjectTitle, task.filePath);
+          projectChanged = true;
+        }
+
+        // プロジェクトが変更された、またはタスクにプロジェクトがある場合、進捗を更新
+        if (projectChanged || task.project) {
+          const allTasks = await this.getAllTasks();
+          await this.projectService.updateAllProjectsProgress(allTasks);
+        }
+      }
+    }, 'タスクの更新');
   }
 
   /**
@@ -152,6 +221,12 @@ export class TaskService {
     }
 
     await this.fileService.updateTask(taskModel);
+
+    // タスクにプロジェクトが紐づいている場合、プロジェクト進捗を更新
+    if (taskModel.project && this.projectService) {
+      const allTasks = await this.getAllTasks();
+      await this.projectService.updateAllProjectsProgress(allTasks);
+    }
   }
 
   /**
@@ -176,6 +251,25 @@ export class TaskService {
     }
 
     await this.fileService.updateTask(taskModel);
+  }
+
+  /**
+   * タスクをゴミ箱に移動
+   */
+  async moveTaskToTrash(taskId: string): Promise<void> {
+    const task = await this.fileService.getTaskById(taskId);
+    if (!task) {
+      throw new Error(`Task not found: ${taskId}`);
+    }
+
+    const taskModel = new TaskModel(task);
+    taskModel.changeStatus('trash');
+
+    await this.fileService.updateTask(taskModel);
+
+    // ファイルを ゴミ箱 フォルダに移動
+    const trashFolder = 'GTD/Tasks/ゴミ箱';
+    await this.fileService.moveTaskToFolder(taskModel, trashFolder);
   }
 
   /**
@@ -213,7 +307,10 @@ export class TaskService {
    * タスクを削除
    */
   async deleteTask(taskId: string): Promise<void> {
-    await this.fileService.deleteTask(taskId);
+    await ErrorHandler.tryCatch(async () => {
+      await this.fileService.deleteTask(taskId);
+      ErrorHandler.success('タスクを削除しました');
+    }, 'タスクの削除');
   }
 
   /**

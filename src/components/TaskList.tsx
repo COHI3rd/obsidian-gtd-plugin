@@ -51,6 +51,7 @@ export const TaskList: React.FC<TaskListProps> = ({
       today: '📅 今日',
       waiting: '⏳ 連絡待ち',
       someday: '💭 いつかやる/多分やる',
+      trash: '🗑️ ゴミ箱',
       completed: '✅ 完了',
     };
     return labels[status] || status;

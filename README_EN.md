@@ -13,10 +13,14 @@ A powerful GTD (Getting Things Done) task management plugin for Obsidian featuri
 - 🔄 **Smart Date Updates** - Yesterday's uncompleted tasks auto-update to today
 - ✅ **Automatic Task Organization** - Completed tasks always appear at bottom
 - 📊 **Project Management** - Auto-calculate progress with backlink support
+- 📂 **Project Card Expansion** - Click to expand/collapse task lists (default: collapsed)
 - 📝 **Daily Note Integration** - Auto-collect completed tasks with Dataview
 - 🔽 **Collapsible Groups** - Fold sections to reduce clutter
 - 👆 **Drop to Collapsed Groups** - Drag tasks to closed groups via title
-- 📱 **Responsive Design** - Optimized layout for different screen sizes
+- 📱 **Responsive Design** - Optimized layout for different screen sizes (450px breakpoint)
+- 📏 **Resizable Panel** - Adjust Today/Other section heights in single-column layout
+- 🖱️ **Right-Click Context Menu** - Quick status changes via context menu
+- 🔄 **View Switcher** - Quick navigation between Tasks/Projects/Weekly Review
 - 🇯🇵 **Bilingual Support** - Full Japanese and English UI
 - 📝 **Markdown Native** - All data stored as markdown files
 - 🔗 **Backlink Integration** - Full Obsidian feature compatibility
@@ -72,6 +76,20 @@ Switch between two sort modes in settings:
 ### Collapsible Groups
 
 Click group titles to collapse/expand sections. Empty groups default to collapsed state.
+
+### Right-Click Context Menu
+
+Right-click any task to quickly change its status via context menu:
+- 📥 Inbox
+- ⚡ Next Action
+- 📅 Today
+- ⏳ Waiting
+- 💡 Someday
+- 🗑️ Trash
+
+### Resizable Panel
+
+In single-column layout (≤450px width), drag the divider between Today and Other sections to adjust their heights.
 
 ### Daily Note Integration
 

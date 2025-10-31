@@ -5,10 +5,15 @@ import { GTDSettings } from './types';
 import { DEFAULT_SETTINGS, GTDSettingTab } from './settings';
 import { FileService } from './services/FileService';
 import { TaskService } from './services/TaskService';
+import { ProjectService } from './services/ProjectService';
 import { DailyNoteService } from './services/DailyNoteService';
 import { GTDMainView } from './views/GTDMainView';
+import { WeeklyReviewView } from './views/WeeklyReviewView';
+import { ProjectView } from './views/ProjectView';
 
 const VIEW_TYPE_GTD = 'gtd-main-view';
+const VIEW_TYPE_WEEKLY_REVIEW = 'gtd-weekly-review';
+const VIEW_TYPE_PROJECT = 'gtd-project-view';
 
 /**
  * GTDビュー - Obsidianのビューとして登録
@@ -16,6 +21,7 @@ const VIEW_TYPE_GTD = 'gtd-main-view';
 class GTDView extends ItemView {
   private root: ReactDOM.Root | null = null;
   private taskService: TaskService;
+  private projectService: ProjectService;
   private fileService: FileService;
   private dailyNoteService: DailyNoteService;
   public refreshCallback: (() => void) | null = null;
@@ -27,8 +33,10 @@ class GTDView extends ItemView {
     super(leaf);
     this.fileService = new FileService(this.app, plugin.settings);
     this.taskService = new TaskService(this.fileService);
+    this.projectService = new ProjectService(this.app, plugin.settings);
     this.dailyNoteService = new DailyNoteService(this.app, plugin.settings);
     this.taskService.setDailyNoteService(this.dailyNoteService);
+    this.taskService.setProjectService(this.projectService);
   }
 
   /**
@@ -71,16 +79,181 @@ class GTDView extends ItemView {
       await this.dailyNoteService.insertCompletedTasksCommand(todayCompletedTasks);
     };
 
+    // ビュー切り替えハンドラ
+    const handleViewChange = async (view: string) => {
+      if (view === 'weekly-review') {
+        await this.plugin.activateWeeklyReviewView();
+      } else if (view === 'project') {
+        await this.plugin.activateProjectView();
+      }
+      // 'main' の場合は何もしない（既に表示中）
+    };
+
     // Reactアプリをマウント
     this.root = ReactDOM.createRoot(container);
     this.root.render(
       <React.StrictMode>
         <GTDMainView
           taskService={this.taskService}
+          projectService={this.projectService}
           fileService={this.fileService}
           settings={this.plugin.settings}
           onMounted={(refreshFn) => this.setRefreshCallback(refreshFn)}
           onInsertToDailyNote={handleInsertToDailyNote}
+          onViewChange={handleViewChange}
+        />
+      </React.StrictMode>
+    );
+  }
+
+  async onClose(): Promise<void> {
+    // Reactアプリをアンマウント
+    if (this.root) {
+      this.root.unmount();
+      this.root = null;
+    }
+  }
+}
+
+/**
+ * 週次レビュービュー - Obsidianのビューとして登録
+ */
+class WeeklyReviewViewLeaf extends ItemView {
+  private root: ReactDOM.Root | null = null;
+  private taskService: TaskService;
+  private projectService: ProjectService;
+  private fileService: FileService;
+  private refreshFn: (() => void) | null = null;
+
+  constructor(
+    leaf: WorkspaceLeaf,
+    private plugin: GTDPlugin
+  ) {
+    super(leaf);
+    this.fileService = new FileService(this.app, plugin.settings);
+    this.taskService = new TaskService(this.fileService);
+    this.projectService = new ProjectService(this.app, plugin.settings);
+    this.taskService.setProjectService(this.projectService);
+  }
+
+  getViewType(): string {
+    return VIEW_TYPE_WEEKLY_REVIEW;
+  }
+
+  getDisplayText(): string {
+    return '週次レビュー';
+  }
+
+  getIcon(): string {
+    return 'calendar-check';
+  }
+
+  async onOpen(): Promise<void> {
+    const container = this.containerEl.children[1];
+    container.empty();
+
+    // ビュー切り替えハンドラ
+    const handleViewChange = async (view: string) => {
+      if (view === 'main') {
+        await this.plugin.activateView();
+      } else if (view === 'project') {
+        await this.plugin.activateProjectView();
+      }
+      // 'weekly-review' の場合は何もしない（既に表示中）
+    };
+
+    // Reactアプリをマウント
+    this.root = ReactDOM.createRoot(container);
+    this.root.render(
+      <React.StrictMode>
+        <WeeklyReviewView
+          taskService={this.taskService}
+          projectService={this.projectService}
+          fileService={this.fileService}
+          settings={this.plugin.settings}
+          onRefresh={() => {
+            // GTDビューをリフレッシュ
+            this.plugin.refreshActiveView();
+          }}
+          onViewChange={handleViewChange}
+          onMounted={(refreshFn) => {
+            this.refreshFn = refreshFn;
+          }}
+        />
+      </React.StrictMode>
+    );
+
+    // ビューが表示される度に最新の状態に更新
+    if (this.refreshFn) {
+      this.refreshFn();
+    }
+  }
+
+  async onClose(): Promise<void> {
+    // Reactアプリをアンマウント
+    if (this.root) {
+      this.root.unmount();
+      this.root = null;
+    }
+  }
+}
+
+/**
+ * プロジェクトビュー - Obsidianのビューとして登録
+ */
+class ProjectViewLeaf extends ItemView {
+  private root: ReactDOM.Root | null = null;
+  private taskService: TaskService;
+  private projectService: ProjectService;
+  private fileService: FileService;
+
+  constructor(
+    leaf: WorkspaceLeaf,
+    private plugin: GTDPlugin
+  ) {
+    super(leaf);
+    this.fileService = new FileService(this.app, plugin.settings);
+    this.taskService = new TaskService(this.fileService);
+    this.projectService = new ProjectService(this.app, plugin.settings);
+    this.taskService.setProjectService(this.projectService);
+  }
+
+  getViewType(): string {
+    return VIEW_TYPE_PROJECT;
+  }
+
+  getDisplayText(): string {
+    return 'プロジェクト';
+  }
+
+  getIcon(): string {
+    return 'folder-kanban';
+  }
+
+  async onOpen(): Promise<void> {
+    const container = this.containerEl.children[1];
+    container.empty();
+
+    // ビュー切り替えハンドラ
+    const handleViewChange = async (view: string) => {
+      if (view === 'main') {
+        await this.plugin.activateView();
+      } else if (view === 'weekly-review') {
+        await this.plugin.activateWeeklyReviewView();
+      }
+      // 'project' の場合は何もしない（既に表示中）
+    };
+
+    // Reactアプリをマウント
+    this.root = ReactDOM.createRoot(container);
+    this.root.render(
+      <React.StrictMode>
+        <ProjectView
+          projectService={this.projectService}
+          taskService={this.taskService}
+          fileService={this.fileService}
+          settings={this.plugin.settings}
+          onViewChange={handleViewChange}
         />
       </React.StrictMode>
     );
@@ -112,11 +285,15 @@ export default class GTDPlugin extends Plugin {
     // サービスを初期化
     const fileService = new FileService(this.app, this.settings);
     this.taskService = new TaskService(fileService);
+    const projectService = new ProjectService(this.app, this.settings);
     this.dailyNoteService = new DailyNoteService(this.app, this.settings);
     this.taskService.setDailyNoteService(this.dailyNoteService);
+    this.taskService.setProjectService(projectService);
 
     // ビューを登録
     this.registerView(VIEW_TYPE_GTD, (leaf) => new GTDView(leaf, this));
+    this.registerView(VIEW_TYPE_WEEKLY_REVIEW, (leaf) => new WeeklyReviewViewLeaf(leaf, this));
+    this.registerView(VIEW_TYPE_PROJECT, (leaf) => new ProjectViewLeaf(leaf, this));
 
     // リボンアイコン
     this.addRibbonIcon('checkbox-glyph', 'GTDビューを開く', () => {
@@ -170,6 +347,24 @@ export default class GTDPlugin extends Plugin {
       },
     });
 
+    // コマンド: 週次レビューを開く
+    this.addCommand({
+      id: 'gtd-open-weekly-review',
+      name: '週次レビューを開く',
+      callback: () => {
+        this.activateWeeklyReviewView();
+      },
+    });
+
+    // コマンド: プロジェクト一覧を開く
+    this.addCommand({
+      id: 'gtd-open-project-view',
+      name: 'プロジェクト一覧を開く',
+      callback: () => {
+        this.activateProjectView();
+      },
+    });
+
     // 設定タブを追加
     this.addSettingTab(new GTDSettingTab(this.app, this));
 
@@ -207,7 +402,7 @@ export default class GTDPlugin extends Plugin {
   /**
    * アクティブなGTDビューをリフレッシュ
    */
-  private refreshActiveView(): void {
+  refreshActiveView(): void {
     const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_GTD);
     leaves.forEach((leaf) => {
       const view = leaf.view;
@@ -222,6 +417,8 @@ export default class GTDPlugin extends Plugin {
 
     // ビューをクリーンアップ
     this.app.workspace.detachLeavesOfType(VIEW_TYPE_GTD);
+    this.app.workspace.detachLeavesOfType(VIEW_TYPE_WEEKLY_REVIEW);
+    this.app.workspace.detachLeavesOfType(VIEW_TYPE_PROJECT);
   }
 
   /**
@@ -240,6 +437,60 @@ export default class GTDPlugin extends Plugin {
         leaf = rightLeaf;
         await leaf.setViewState({
           type: VIEW_TYPE_GTD,
+          active: true,
+        });
+      }
+    }
+
+    // ビューを表示
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+    }
+  }
+
+  /**
+   * 週次レビュービューをアクティブ化
+   */
+  async activateWeeklyReviewView(): Promise<void> {
+    const { workspace } = this.app;
+
+    // 既存のビューを探す
+    let leaf = workspace.getLeavesOfType(VIEW_TYPE_WEEKLY_REVIEW)[0];
+
+    if (!leaf) {
+      // 新しいビューを右側に作成
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (rightLeaf) {
+        leaf = rightLeaf;
+        await leaf.setViewState({
+          type: VIEW_TYPE_WEEKLY_REVIEW,
+          active: true,
+        });
+      }
+    }
+
+    // ビューを表示
+    if (leaf) {
+      workspace.revealLeaf(leaf);
+    }
+  }
+
+  /**
+   * プロジェクトビューをアクティブ化
+   */
+  async activateProjectView(): Promise<void> {
+    const { workspace } = this.app;
+
+    // 既存のビューを探す
+    let leaf = workspace.getLeavesOfType(VIEW_TYPE_PROJECT)[0];
+
+    if (!leaf) {
+      // 新しいビューを右側に作成
+      const rightLeaf = workspace.getRightLeaf(false);
+      if (rightLeaf) {
+        leaf = rightLeaf;
+        await leaf.setViewState({
+          type: VIEW_TYPE_PROJECT,
           active: true,
         });
       }

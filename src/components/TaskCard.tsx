@@ -1,29 +1,36 @@
 import React, { useState } from 'react';
-import { Task } from '../types';
+import { Task, TaskStatus } from '../types';
 import { DateManager } from '../utils/DateManager';
 
 interface TaskCardProps {
   task: Task;
   onToggleComplete: (taskId: string) => void;
   onOpenTask?: (task: Task) => void;
+  onDelete?: (taskId: string) => void;
+  onStatusChange?: (taskId: string, status: TaskStatus) => void;
   isDragging?: boolean;
   compact?: boolean;
   showDateLabel?: boolean;
+  showProject?: boolean;
 }
 
 /**
  * タスクカードコンポーネント
  * ドラッグ可能なタスク表示カード
+ * React.memoでメモ化してパフォーマンスを最適化
  */
-export const TaskCard: React.FC<TaskCardProps> = ({
+export const TaskCard: React.FC<TaskCardProps> = React.memo(({
   task,
   onToggleComplete,
   onOpenTask,
+  onStatusChange,
   isDragging = false,
   compact = false,
   showDateLabel = false,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
+  const [showContextMenu, setShowContextMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
   const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation();
@@ -41,6 +48,31 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       onOpenTask(task);
     }
   };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (!onStatusChange) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    setMenuPosition({ x: e.clientX, y: e.clientY });
+    setShowContextMenu(true);
+  };
+
+  const handleStatusMenuClick = (status: TaskStatus) => {
+    if (onStatusChange) {
+      onStatusChange(task.id, status);
+    }
+    setShowContextMenu(false);
+  };
+
+  // クリックアウェイでメニューを閉じる
+  React.useEffect(() => {
+    const handleClickOutside = () => setShowContextMenu(false);
+    if (showContextMenu) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showContextMenu]);
 
   const getPriorityColor = () => {
     switch (task.priority) {
@@ -77,6 +109,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           task.completed ? 'gtd-task-card--completed' : ''
         }`}
         onClick={handleTitleClick}
+        onContextMenu={handleContextMenu}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -168,14 +201,16 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   // 右側＆コンパクト表示用：シンプル
   return (
-    <div
-      className={`gtd-task-card ${compact ? 'gtd-task-card--compact' : ''} ${
-        task.completed ? 'gtd-task-card--completed' : ''
-      }`}
-      onClick={handleTitleClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <>
+      <div
+        className={`gtd-task-card ${compact ? 'gtd-task-card--compact' : ''} ${
+          task.completed ? 'gtd-task-card--completed' : ''
+        }`}
+        onClick={handleTitleClick}
+        onContextMenu={handleContextMenu}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
       {/* チェックボックス */}
       <div className="gtd-task-card__checkbox" onClick={handleCheckboxClick}>
         <input
@@ -247,5 +282,46 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         <div className="gtd-task-card__drag-handle">⋮⋮</div>
       )}
     </div>
+
+    {/* コンテキストメニュー */}
+    {showContextMenu && onStatusChange && (
+      <div
+        className="gtd-context-menu"
+        style={{
+          position: 'fixed',
+          left: `${menuPosition.x}px`,
+          top: `${menuPosition.y}px`,
+          zIndex: 1000,
+        }}
+      >
+        <div className="gtd-context-menu__item" onClick={() => handleStatusMenuClick('inbox')}>
+          📥 Inbox
+        </div>
+        <div className="gtd-context-menu__item" onClick={() => handleStatusMenuClick('next-action')}>
+          ⚡ Next Action
+        </div>
+        <div className="gtd-context-menu__item" onClick={() => handleStatusMenuClick('today')}>
+          📅 Today
+        </div>
+        <div className="gtd-context-menu__item" onClick={() => handleStatusMenuClick('waiting')}>
+          ⏳ Waiting
+        </div>
+        <div className="gtd-context-menu__item" onClick={() => handleStatusMenuClick('someday')}>
+          💡 Someday
+        </div>
+        <div className="gtd-context-menu__item" onClick={() => handleStatusMenuClick('trash')}>
+          🗑️ Trash
+        </div>
+      </div>
+    )}
+  </>
   );
-};
+}, (prevProps, nextProps) => {
+  // カスタム比較関数: task.idとcompletedが同じなら再レンダリングしない
+  return (
+    prevProps.task.id === nextProps.task.id &&
+    prevProps.task.completed === nextProps.task.completed &&
+    prevProps.task.title === nextProps.task.title &&
+    prevProps.isDragging === nextProps.isDragging
+  );
+});

@@ -1,18 +1,30 @@
-import React from 'react';
-import { Project } from '../types';
+import React, { useState } from 'react';
+import { Project, ProjectStatus, Task } from '../types';
 import { ProgressBar } from './ProgressBar';
 import { DateManager } from '../utils/DateManager';
 
 interface ProjectCardProps {
   project: Project;
+  tasks?: Task[];
   onClick?: (project: Project) => void;
+  onStatusChange?: (project: Project, status: ProjectStatus) => void;
+  onImportanceChange?: (project: Project, importance: number) => void;
+  onTaskClick?: (task: Task) => void;
 }
 
 /**
  * プロジェクトカードコンポーネント
  * プロジェクトの概要を表示
  */
-export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick }) => {
+export const ProjectCard: React.FC<ProjectCardProps> = ({
+  project,
+  tasks = [],
+  onClick,
+  onStatusChange,
+  onImportanceChange,
+  onTaskClick
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   const getStatusLabel = () => {
     switch (project.status) {
       case 'not-started':
@@ -43,25 +55,75 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick }) =>
     return '⭐'.repeat(project.importance);
   };
 
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    e.stopPropagation();
+    if (onStatusChange) {
+      onStatusChange(project, e.target.value as ProjectStatus);
+    }
+  };
+
+  const handleImportanceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    e.stopPropagation();
+    if (onImportanceChange) {
+      onImportanceChange(project, parseInt(e.target.value));
+    }
+  };
+
+  const toggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
+  };
+
   return (
-    <div
-      className="gtd-project-card"
-      onClick={() => onClick && onClick(project)}
-    >
+    <div className="gtd-project-card">
       {/* ヘッダー */}
-      <div className="gtd-project-card__header">
+      <div
+        className="gtd-project-card__header"
+        onClick={() => onClick && onClick(project)}
+      >
         <div className="gtd-project-card__title">{project.title}</div>
-        <div className="gtd-project-card__importance">{getImportanceStars()}</div>
+        <div className="gtd-project-card__importance">
+          {onImportanceChange ? (
+            <select
+              value={project.importance}
+              onChange={handleImportanceChange}
+              className="gtd-project-card__importance-select"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="1">⭐</option>
+              <option value="2">⭐⭐</option>
+              <option value="3">⭐⭐⭐</option>
+              <option value="4">⭐⭐⭐⭐</option>
+              <option value="5">⭐⭐⭐⭐⭐</option>
+            </select>
+          ) : (
+            getImportanceStars()
+          )}
+        </div>
       </div>
 
       {/* ステータス */}
       <div className="gtd-project-card__status">
-        <span
-          className="gtd-project-card__status-badge"
-          style={{ backgroundColor: getStatusColor() }}
-        >
-          {getStatusLabel()}
-        </span>
+        {onStatusChange ? (
+          <select
+            value={project.status}
+            onChange={handleStatusChange}
+            className="gtd-project-card__status-select"
+            style={{ backgroundColor: getStatusColor() }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <option value="not-started">未着手</option>
+            <option value="in-progress">進行中</option>
+            <option value="completed">完了</option>
+          </select>
+        ) : (
+          <span
+            className="gtd-project-card__status-badge"
+            style={{ backgroundColor: getStatusColor() }}
+          >
+            {getStatusLabel()}
+          </span>
+        )}
 
         {project.deadline && (
           <span
@@ -80,10 +142,41 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick }) =>
       </div>
 
       {/* アクションプラン（省略表示） */}
-      {project.actionPlan && (
+      {project.actionPlan && !isExpanded && (
         <div className="gtd-project-card__action-plan">
           {project.actionPlan.split('\n')[0].substring(0, 60)}
           {project.actionPlan.length > 60 && '...'}
+        </div>
+      )}
+
+      {/* タスクリスト展開ボタン */}
+      {tasks.length > 0 && (
+        <div className="gtd-project-card__toggle" onClick={toggleExpand}>
+          <span>{isExpanded ? '▼' : '▶'}</span>
+          <span className="gtd-project-card__task-count">
+            タスク ({tasks.filter(t => !t.completed).length}/{tasks.length})
+          </span>
+        </div>
+      )}
+
+      {/* タスクリスト */}
+      {isExpanded && tasks.length > 0 && (
+        <div className="gtd-project-card__tasks">
+          {tasks.map((task) => (
+            <div
+              key={task.id}
+              className={`gtd-project-card__task ${task.completed ? 'gtd-project-card__task--completed' : ''}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onTaskClick?.(task);
+              }}
+            >
+              <span className="gtd-project-card__task-checkbox">
+                {task.completed ? '✓' : '○'}
+              </span>
+              <span className="gtd-project-card__task-title">{task.title}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>

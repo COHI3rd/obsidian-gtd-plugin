@@ -1,26 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Task, TaskStatus, TaskPriority, GTDSettings } from '../types';
+import { Task, TaskStatus, TaskPriority, GTDSettings, Project } from '../types';
 import { TaskCard } from '../components/TaskCard';
 import { QuickAddModal } from '../components/QuickAddModal';
+import { ViewSwitcher, ViewType } from '../components/ViewSwitcher';
 import { TaskService } from '../services/TaskService';
+import { ProjectService } from '../services/ProjectService';
 import { FileService } from '../services/FileService';
 import { TaskModel } from '../models/Task';
 
 interface GTDMainViewProps {
   taskService: TaskService;
+  projectService: ProjectService;
   fileService: FileService;
   settings: GTDSettings;
   onMounted?: (refreshFn: () => void) => void;
   onInsertToDailyNote?: () => void;
+  onViewChange?: (view: ViewType) => void;
 }
 
 /**
  * GTDメインビューコンポーネント
  * 2カラムレイアウトでInbox/Today/次に取るべき行動を表示
  */
-export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileService, settings, onMounted, onInsertToDailyNote }) => {
+export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectService, fileService, settings, onMounted, onInsertToDailyNote, onViewChange }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({
@@ -30,6 +35,8 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
     waiting: false,
     someday: false,
   });
+  const [splitRatio, setSplitRatio] = useState<number>(50); // パーセンテージ
+  const [isResizing, setIsResizing] = useState(false);
 
   // タスク一覧を読み込み
   const loadTasks = async () => {
@@ -44,8 +51,19 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
     }
   };
 
+  // プロジェクト一覧を読み込み
+  const loadProjects = async () => {
+    try {
+      const allProjects = await projectService.getAllProjects();
+      setProjects(allProjects);
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+    }
+  };
+
   useEffect(() => {
     loadTasks();
+    loadProjects();
 
     // リフレッシュ関数を親コンポーネントに渡す
     if (onMounted) {
@@ -67,25 +85,6 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
       window.removeEventListener('resize', logViewWidth);
     };
   }, []);
-
-  // タスク読み込み後に空のグループを閉じる
-  useEffect(() => {
-    if (!loading && tasks.length > 0) {
-      const todayTasks = getTodayTasks();
-      const inboxTasks = getTasksByStatus('inbox');
-      const nextActionTasks = getTasksByStatus('next-action');
-      const waitingTasks = getTasksByStatus('waiting');
-      const somedayTasks = getTasksByStatus('someday');
-
-      setCollapsedGroups({
-        today: todayTasks.length === 0,
-        inbox: inboxTasks.length === 0,
-        'next-action': nextActionTasks.length === 0,
-        waiting: waitingTasks.length === 0,
-        someday: somedayTasks.length === 0,
-      });
-    }
-  }, [loading]);
 
   // タスクをソート
   const sortTasks = (taskList: Task[]): Task[] => {
@@ -120,19 +119,38 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
     return [...incompleteTasks, ...completedTasks];
   };
 
-  // タスクをステータスでフィルタ
-  const getTasksByStatus = (status: TaskStatus, excludeCompleted = true): Task[] => {
+  // タスクをステータスでフィルタ（useMemoでメモ化）
+  const getTasksByStatus = useCallback((status: TaskStatus, excludeCompleted = true): Task[] => {
     const filtered = tasks.filter(
       (task) => task.status === status && (!excludeCompleted || !task.completed)
     );
     return sortTasks(filtered);
-  };
+  }, [tasks, settings.taskSortMode]);
 
-  // 今日のタスクを取得（完了済みも含める）
-  const getTodayTasks = (): Task[] => {
+  // 今日のタスクを取得（完了済みも含める）- useMemoでメモ化
+  const todayTasks = useMemo(() => {
     const todayTasks = tasks.filter((task) => task.isToday());
     return sortTasks(todayTasks);
-  };
+  }, [tasks, settings.taskSortMode]);
+
+  // 各ステータスのタスクをメモ化
+  const inboxTasks = useMemo(() => getTasksByStatus('inbox'), [tasks, settings.taskSortMode]);
+  const nextActionTasks = useMemo(() => getTasksByStatus('next-action'), [tasks, settings.taskSortMode]);
+  const waitingTasks = useMemo(() => getTasksByStatus('waiting'), [tasks, settings.taskSortMode]);
+  const somedayTasks = useMemo(() => getTasksByStatus('someday'), [tasks, settings.taskSortMode]);
+
+  // タスク読み込み後に空のグループを閉じる
+  useEffect(() => {
+    if (!loading && tasks.length > 0) {
+      setCollapsedGroups({
+        today: todayTasks.length === 0,
+        inbox: inboxTasks.length === 0,
+        'next-action': nextActionTasks.length === 0,
+        waiting: waitingTasks.length === 0,
+        someday: somedayTasks.length === 0,
+      });
+    }
+  }, [loading, todayTasks, inboxTasks, nextActionTasks, waitingTasks, somedayTasks]);
 
   // グループの開閉をトグル
   const toggleGroup = (groupId: string) => {
@@ -165,20 +183,38 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
 
       // 異なるグループへの移動
       // 移動先に応じてタスクのステータスと日付を更新
-      if (destination.droppableId === 'today') {
+      if (destination.droppableId === 'trash') {
+        // ゴミ箱への移動
+        await taskService.moveTaskToTrash(task.id);
+        // UIから削除（ゴミ箱ビューを実装するまで）
+        setTasks(prevTasks => prevTasks.filter(t => t.id !== task.id));
+      } else if (destination.droppableId === 'today') {
         await taskService.moveTaskToToday(task.id);
+        // 状態を即座に更新
+        setTasks(prevTasks => prevTasks.map(t =>
+          t.id === task.id ? new TaskModel({ ...t, status: 'today' as TaskStatus, date: new Date() }) : t
+        ));
       } else if (destination.droppableId === 'next-action') {
         await taskService.changeTaskStatus(task.id, 'next-action');
+        setTasks(prevTasks => prevTasks.map(t =>
+          t.id === task.id ? new TaskModel({ ...t, status: 'next-action' as TaskStatus }) : t
+        ));
       } else if (destination.droppableId === 'inbox') {
         await taskService.changeTaskStatus(task.id, 'inbox');
+        setTasks(prevTasks => prevTasks.map(t =>
+          t.id === task.id ? new TaskModel({ ...t, status: 'inbox' as TaskStatus }) : t
+        ));
       } else if (destination.droppableId === 'waiting') {
         await taskService.changeTaskStatus(task.id, 'waiting');
+        setTasks(prevTasks => prevTasks.map(t =>
+          t.id === task.id ? new TaskModel({ ...t, status: 'waiting' as TaskStatus }) : t
+        ));
       } else if (destination.droppableId === 'someday') {
         await taskService.changeTaskStatus(task.id, 'someday');
+        setTasks(prevTasks => prevTasks.map(t =>
+          t.id === task.id ? new TaskModel({ ...t, status: 'someday' as TaskStatus }) : t
+        ));
       }
-
-      // タスクを再読み込み
-      await loadTasks();
     } catch (error) {
       console.error('Failed to move task:', error);
     }
@@ -186,18 +222,18 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
 
   // タスクの順序を更新
   const updateTaskOrder = async (droppableId: string, sourceIndex: number, destinationIndex: number) => {
-    // 対象グループのタスクを取得
+    // 対象グループのタスクを取得（メモ化された値を使用）
     let groupTasks: Task[] = [];
     if (droppableId === 'today') {
-      groupTasks = getTodayTasks();
+      groupTasks = [...todayTasks];
     } else if (droppableId === 'inbox') {
-      groupTasks = getTasksByStatus('inbox', false);
+      groupTasks = [...inboxTasks, ...tasks.filter(t => t.status === 'inbox' && t.completed)];
     } else if (droppableId === 'next-action') {
-      groupTasks = getTasksByStatus('next-action', false);
+      groupTasks = [...nextActionTasks, ...tasks.filter(t => t.status === 'next-action' && t.completed)];
     } else if (droppableId === 'waiting') {
-      groupTasks = getTasksByStatus('waiting', false);
+      groupTasks = [...waitingTasks, ...tasks.filter(t => t.status === 'waiting' && t.completed)];
     } else if (droppableId === 'someday') {
-      groupTasks = getTasksByStatus('someday', false);
+      groupTasks = [...somedayTasks, ...tasks.filter(t => t.status === 'someday' && t.completed)];
     }
 
     // 並び替え
@@ -205,12 +241,21 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
     groupTasks.splice(destinationIndex, 0, movedTask);
 
     // order値を更新
+    const updatedTaskIds = new Set<string>();
     for (let i = 0; i < groupTasks.length; i++) {
       const taskModel = new TaskModel({ ...groupTasks[i], order: i });
       await fileService.updateTask(taskModel);
+      updatedTaskIds.add(taskModel.id);
     }
 
-    await loadTasks();
+    // 状態を即座に更新（ちらつき防止）
+    setTasks(prevTasks => prevTasks.map(t => {
+      if (updatedTaskIds.has(t.id)) {
+        const updatedTask = groupTasks.find(gt => gt.id === t.id);
+        return updatedTask ? new TaskModel({ ...updatedTask }) : t;
+      }
+      return t;
+    }));
   };
 
   // タスク完了トグル
@@ -248,10 +293,45 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
     }
   };
 
+  // リサイズハンドラー
+  const handleMouseDown = useCallback(() => {
+    setIsResizing(true);
+  }, []);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isResizing) return;
+
+    const container = document.querySelector('.gtd-main-view__content');
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const percentage = (y / rect.height) * 100;
+
+    // 20%〜80%の範囲に制限
+    const clampedPercentage = Math.min(Math.max(percentage, 20), 80);
+    setSplitRatio(clampedPercentage);
+  }, [isResizing]);
+
+  const handleMouseUp = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isResizing, handleMouseMove, handleMouseUp]);
+
   // クイック追加
-  const handleQuickAdd = async (title: string, status: TaskStatus, priority: TaskPriority) => {
+  const handleQuickAdd = async (title: string, status: TaskStatus, priority: TaskPriority, project?: string) => {
     try {
-      await taskService.createTask({ title, status, priority });
+      await taskService.createTask({ title, status, priority, project });
       await loadTasks();
     } catch (error) {
       console.error('Failed to create task:', error);
@@ -262,20 +342,24 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
     return <div className="gtd-loading">読み込み中...</div>;
   }
 
-  const inboxTasks = getTasksByStatus('inbox');
-  const nextActionTasks = getTasksByStatus('next-action');
-  const todayTasks = getTodayTasks();
-  const waitingTasks = getTasksByStatus('waiting');
-  const somedayTasks = getTasksByStatus('someday');
-
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="gtd-main-view">
         {/* ヘッダー */}
         <div className="gtd-main-view__header">
-          <h2>📋 GTD タスク</h2>
+          <ViewSwitcher
+            currentView="main"
+            onViewChange={(view) => {
+              if (onViewChange) {
+                onViewChange(view);
+              }
+            }}
+          />
           <div className="gtd-main-view__header-buttons">
-            <button className="gtd-button gtd-button--primary" onClick={() => setIsModalOpen(true)}>
+            <button className="gtd-button gtd-button--primary" onClick={() => {
+              loadProjects(); // プロジェクトリストを最新化
+              setIsModalOpen(true);
+            }}>
               + タスクを追加
             </button>
             {onInsertToDailyNote && (
@@ -293,7 +377,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
         {/* 2カラムレイアウト */}
         <div className="gtd-main-view__content">
           {/* 左側: Today */}
-          <div className="gtd-main-view__left">
+          <div className="gtd-main-view__left" style={{ height: `${splitRatio}%` }}>
             <div className="gtd-section">
               <Droppable droppableId="today">
                 {(provided, snapshot) => (
@@ -348,8 +432,17 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
             </div>
           </div>
 
+          {/* リサイズハンドル（1列レイアウト時のみ表示） */}
+          <div
+            className="gtd-resize-handle"
+            onMouseDown={handleMouseDown}
+            style={{ cursor: isResizing ? 'row-resize' : 'ns-resize' }}
+          >
+            <div className="gtd-resize-handle__bar"></div>
+          </div>
+
           {/* 右側: Next Actions + Inbox */}
-          <div className="gtd-main-view__right">
+          <div className="gtd-main-view__right" style={{ height: `${100 - splitRatio}%` }}>
             {/* 次に取るべき行動 */}
             <div className="gtd-section">
               <Droppable droppableId="next-action">
@@ -553,6 +646,31 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
                 )}
               </Droppable>
             </div>
+
+            {/* ゴミ箱 */}
+            <div className="gtd-section gtd-section--trash">
+              <Droppable droppableId="trash">
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="gtd-section-wrapper gtd-section-wrapper--trash"
+                  >
+                    <h3
+                      className={`gtd-section__title gtd-section__title--trash ${snapshot.isDraggingOver ? 'gtd-section__title--dragging-over-trash' : ''}`}
+                    >
+                      🗑️ ゴミ箱
+                    </h3>
+                    <div className={`gtd-droppable gtd-droppable--trash ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over-trash' : ''}`}>
+                      <div className="gtd-trash-hint">
+                        タスクをここにドロップして削除
+                      </div>
+                    </div>
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </div>
           </div>
         </div>
 
@@ -561,6 +679,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, fileServi
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleQuickAdd}
+          projects={projects}
         />
       </div>
     </DragDropContext>

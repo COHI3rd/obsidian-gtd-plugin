@@ -3,7 +3,7 @@
 /**
  * GTDワークフロー上のタスクの位置
  */
-export type TaskStatus = 'inbox' | 'next-action' | 'today' | 'waiting' | 'someday';
+export type TaskStatus = 'inbox' | 'next-action' | 'today' | 'waiting' | 'someday' | 'trash';
 
 /**
  * タスクの優先度

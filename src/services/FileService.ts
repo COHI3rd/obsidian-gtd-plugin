@@ -14,6 +14,13 @@ export class FileService {
   ) {}
 
   /**
+   * Appインスタンスを取得
+   */
+  getApp(): App {
+    return this.app;
+  }
+
+  /**
    * 全タスクを取得
    */
   async getAllTasks(): Promise<Task[]> {
@@ -50,7 +57,7 @@ export class FileService {
   /**
    * タスクを作成
    */
-  async createTask(task: Task): Promise<void> {
+  async createTask(task: Task): Promise<string> {
     try {
       const fileName = `${task.title.replace(/[/\\:*?"<>|]/g, '_')}.md`;
       const filePath = `${this.settings.taskFolder}/${fileName}`;
@@ -68,11 +75,11 @@ export class FileService {
 
       const content = TaskParser.stringify(task);
       await this.app.vault.create(finalPath, content);
+      // 通知はTaskServiceで行うため、ここでは通知しない
 
-      new Notice(`タスク「${task.title}」を作成しました`);
+      return finalPath;
     } catch (error) {
       console.error('Failed to create task:', error);
-      new Notice('タスクの作成に失敗しました');
       throw error;
     }
   }
@@ -209,6 +216,32 @@ export class FileService {
     const folder = this.app.vault.getAbstractFileByPath(folderPath);
     if (!folder) {
       await this.app.vault.createFolder(folderPath);
+    }
+  }
+
+  /**
+   * タスクファイルを指定フォルダに移動
+   */
+  async moveTaskToFolder(task: Task, folderPath: string): Promise<void> {
+    try {
+      // フォルダが存在しない場合は作成
+      await this.ensureFolderExists(folderPath);
+
+      const file = this.app.vault.getAbstractFileByPath(task.filePath);
+      if (!file || !(file instanceof TFile)) {
+        throw new Error(`Task file not found: ${task.filePath}`);
+      }
+
+      // 新しいファイルパスを生成
+      const fileName = file.name;
+      const newPath = `${folderPath}/${fileName}`;
+
+      // ファイルを移動
+      await this.app.fileManager.renameFile(file, newPath);
+    } catch (error) {
+      console.error('Failed to move task to folder:', error);
+      new Notice('タスクの移動に失敗しました');
+      throw error;
     }
   }
 
