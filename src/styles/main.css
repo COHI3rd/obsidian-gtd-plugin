@@ -657,13 +657,13 @@
 
 /* プロジェクトカード */
 .gtd-project-card {
-  padding: 10px 12px;
+  padding: 7px 8px;
   background: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .gtd-project-card:hover {
@@ -675,11 +675,11 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
 
 .gtd-project-card__title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   flex: 1;
 }
@@ -708,8 +708,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
-  font-size: 11px;
+  margin-bottom: 4px;
+  font-size: 10px;
 }
 
 .gtd-project-card__status-badge {
@@ -746,22 +746,22 @@
 }
 
 .gtd-project-card__progress {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .gtd-project-card__action-plan {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
   font-style: italic;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .gtd-project-card__toggle {
-  margin-top: 8px;
-  padding: 6px 8px;
+  margin-top: 6px;
+  padding: 4px 6px;
   background: var(--background-secondary);
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -779,21 +779,21 @@
 }
 
 .gtd-project-card__tasks {
-  margin-top: 8px;
-  padding: 8px 0;
+  margin-top: 6px;
+  padding: 6px 0;
   border-top: 1px solid var(--background-modifier-border);
 }
 
 .gtd-project-card__task {
-  padding: 6px 8px;
-  margin-bottom: 4px;
+  padding: 4px 6px;
+  margin-bottom: 3px;
   background: var(--background-secondary);
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   transition: background 0.2s;
 }
 

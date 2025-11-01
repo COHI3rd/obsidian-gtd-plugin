@@ -17,13 +17,14 @@ interface GTDMainViewProps {
   onMounted?: (refreshFn: () => void) => void;
   onInsertToDailyNote?: () => void;
   onViewChange?: (view: ViewType) => void;
+  onTaskUpdated?: () => void;
 }
 
 /**
  * GTDメインビューコンポーネント
  * 2カラムレイアウトでInbox/Today/次に取るべき行動を表示
  */
-export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectService, fileService, settings, onMounted, onInsertToDailyNote, onViewChange }) => {
+export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectService, fileService, settings, onMounted, onInsertToDailyNote, onViewChange, onTaskUpdated }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -268,6 +269,11 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
       // タスク一覧を再読み込みしてプロジェクト進捗も反映
       await loadTasks();
       console.log('[GTDMainView] Tasks reloaded');
+
+      // 他のビューも更新
+      if (onTaskUpdated) {
+        onTaskUpdated();
+      }
     } catch (error) {
       console.error('[GTDMainView] Failed to toggle task:', error);
       // エラー時は再読み込みして正しい状態に戻す
@@ -285,6 +291,11 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
       // タスク一覧を再読み込み
       await loadTasks();
       console.log('[GTDMainView] Tasks reloaded');
+
+      // 他のビューも更新
+      if (onTaskUpdated) {
+        onTaskUpdated();
+      }
     } catch (error) {
       console.error('[GTDMainView] Failed to change task status:', error);
       await loadTasks();

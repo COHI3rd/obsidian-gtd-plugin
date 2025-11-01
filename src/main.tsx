@@ -101,6 +101,7 @@ class GTDView extends ItemView {
           onMounted={(refreshFn) => this.setRefreshCallback(refreshFn)}
           onInsertToDailyNote={handleInsertToDailyNote}
           onViewChange={handleViewChange}
+          onTaskUpdated={() => this.plugin.refreshAllViews()}
         />
       </React.StrictMode>
     );
@@ -123,7 +124,7 @@ class WeeklyReviewViewLeaf extends ItemView {
   private taskService: TaskService;
   private projectService: ProjectService;
   private fileService: FileService;
-  private refreshFn: (() => void) | null = null;
+  public refreshFn: (() => void) | null = null;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -179,6 +180,7 @@ class WeeklyReviewViewLeaf extends ItemView {
           onMounted={(refreshFn) => {
             this.refreshFn = refreshFn;
           }}
+          onTaskUpdated={() => this.plugin.refreshAllViews()}
         />
       </React.StrictMode>
     );
@@ -206,6 +208,7 @@ class ProjectViewLeaf extends ItemView {
   private taskService: TaskService;
   private projectService: ProjectService;
   private fileService: FileService;
+  public refreshFn: (() => void) | null = null;
 
   constructor(
     leaf: WorkspaceLeaf,
@@ -254,6 +257,10 @@ class ProjectViewLeaf extends ItemView {
           fileService={this.fileService}
           settings={this.plugin.settings}
           onViewChange={handleViewChange}
+          onMounted={(refreshFn) => {
+            this.refreshFn = refreshFn;
+          }}
+          onTaskUpdated={() => this.plugin.refreshAllViews()}
         />
       </React.StrictMode>
     );
@@ -408,6 +415,43 @@ export default class GTDPlugin extends Plugin {
       const view = leaf.view;
       if (view instanceof GTDView && view.refreshCallback) {
         view.refreshCallback();
+      }
+    });
+  }
+
+  /**
+   * すべてのビューをリフレッシュ（タスク状態同期用）
+   */
+  refreshAllViews(): void {
+    console.log('[GTDPlugin] Refreshing all views');
+
+    // GTDメインビューをリフレッシュ
+    const gtdLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_GTD);
+    gtdLeaves.forEach((leaf) => {
+      const view = leaf.view;
+      if (view instanceof GTDView && view.refreshCallback) {
+        console.log('[GTDPlugin] Refreshing GTD main view');
+        view.refreshCallback();
+      }
+    });
+
+    // 週次レビュービューをリフレッシュ
+    const weeklyLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_WEEKLY_REVIEW);
+    weeklyLeaves.forEach((leaf) => {
+      const view = leaf.view;
+      if (view instanceof WeeklyReviewViewLeaf && view.refreshFn) {
+        console.log('[GTDPlugin] Refreshing weekly review view');
+        view.refreshFn();
+      }
+    });
+
+    // プロジェクトビューをリフレッシュ
+    const projectLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_PROJECT);
+    projectLeaves.forEach((leaf) => {
+      const view = leaf.view;
+      if (view instanceof ProjectViewLeaf && view.refreshFn) {
+        console.log('[GTDPlugin] Refreshing project view');
+        view.refreshFn();
       }
     });
   }

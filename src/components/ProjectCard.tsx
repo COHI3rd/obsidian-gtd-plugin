@@ -26,6 +26,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onTaskClick,
   onTaskToggleComplete
 }) => {
+  // デフォルトは閉じた状態（false）
   const [isExpanded, setIsExpanded] = useState(false);
   const getStatusLabel = () => {
     switch (project.status) {

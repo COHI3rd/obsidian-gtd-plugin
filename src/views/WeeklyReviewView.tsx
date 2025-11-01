@@ -15,6 +15,7 @@ interface WeeklyReviewViewProps {
   onRefresh?: () => void;
   onViewChange?: (view: ViewType) => void;
   onMounted?: (refreshFn: () => void) => void;
+  onTaskUpdated?: () => void;
 }
 
 /**
@@ -31,7 +32,8 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
   settings,
   onRefresh,
   onViewChange,
-  onMounted
+  onMounted,
+  onTaskUpdated
 }) => {
   const [somedayTasks, setSomedayTasks] = useState<Task[]>([]);
   const [waitingTasks, setWaitingTasks] = useState<Task[]>([]);
@@ -147,6 +149,11 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       await loadData();
       onRefresh?.();
       console.log('[WeeklyReview] Data reloaded');
+
+      // 他のビューも更新
+      if (onTaskUpdated) {
+        onTaskUpdated();
+      }
     } catch (error) {
       console.error('[WeeklyReview] Failed to toggle task completion:', error);
     }

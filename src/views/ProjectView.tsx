@@ -14,6 +14,8 @@ interface ProjectViewProps {
   fileService: FileService;
   settings: GTDSettings;
   onViewChange?: (view: ViewType) => void;
+  onMounted?: (refreshFn: () => void) => void;
+  onTaskUpdated?: () => void;
 }
 
 /**
@@ -25,7 +27,9 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
   taskService,
   fileService,
   settings,
-  onViewChange
+  onViewChange,
+  onMounted,
+  onTaskUpdated
 }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [allTasks, setAllTasks] = useState<Task[]>([]);
@@ -38,6 +42,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
   const loadData = async () => {
     try {
       setLoading(true);
+      console.log('[ProjectView] Loading data...');
 
       // プロジェクトとタスクを読み込み
       const allProjects = await projectService.getAllProjects();
@@ -51,6 +56,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
 
       setProjects(allProjects);
       setAllTasks(tasks);
+      console.log('[ProjectView] Data loaded successfully');
     } catch (error) {
       console.error('Failed to load projects:', error);
     } finally {
@@ -60,6 +66,10 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
 
   useEffect(() => {
     loadData();
+    // リフレッシュ関数を親コンポーネントに渡す
+    if (onMounted) {
+      onMounted(loadData);
+    }
   }, []);
 
   // プロジェクトをフィルタリング
@@ -161,6 +171,11 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
       console.log('[ProjectView] Task updated in file, reloading...');
       await loadData();
       console.log('[ProjectView] Data reloaded');
+
+      // 他のビューも更新
+      if (onTaskUpdated) {
+        onTaskUpdated();
+      }
     } catch (error) {
       console.error('[ProjectView] Failed to toggle task completion:', error);
     }
