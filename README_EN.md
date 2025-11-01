@@ -11,6 +11,7 @@ A powerful GTD (Getting Things Done) task management plugin for Obsidian featuri
 - 🖱️ **Drag & Drop Interface** - Intuitive task movement and manual sorting
 - 📅 **Automatic Date Management** - Auto-assign today's date when moving to Today
 - 🔄 **Smart Date Updates** - Yesterday's uncompleted tasks auto-update to today
+- 🕛 **Auto Date Change Detection** - Automatically refresh all views when date changes (checks every 60 seconds)
 - ✅ **Automatic Task Organization** - Completed tasks always appear at bottom
 - 📊 **Project Management** - Auto-calculate progress with backlink support
 - 📂 **Project Card Expansion** - Click to expand/collapse task lists (default: collapsed)
@@ -21,6 +22,7 @@ A powerful GTD (Getting Things Done) task management plugin for Obsidian featuri
 - 📏 **Resizable Panel** - Adjust Today/Other section heights in single-column layout
 - 🖱️ **Right-Click Context Menu** - Quick status changes via context menu
 - 🔄 **View Switcher** - Quick navigation between Tasks/Projects/Weekly Review
+- 🔄 **Manual Refresh** - 🔄 button in each view header, or "Refresh All Views" command
 - 🇯🇵 **Bilingual Support** - Full Japanese and English UI
 - 📝 **Markdown Native** - All data stored as markdown files
 - 🔗 **Backlink Integration** - Full Obsidian feature compatibility
@@ -90,6 +92,25 @@ Right-click any task to quickly change its status via context menu:
 ### Resizable Panel
 
 In single-column layout (≤450px width), drag the divider between Today and Other sections to adjust their heights.
+
+### View Refresh
+
+Three ways to refresh task lists:
+
+1. **Auto-Refresh (Date Change Detection)**
+   - Automatically refreshes all views when date changes
+   - Checks date every 60 seconds in background
+   - Ensures "Today" tasks are always current
+   - Works even when Obsidian is left open overnight
+
+2. **Manual Refresh (UI Button)**
+   - Click the 🔄 button in each view header (GTD Main, Weekly Review, Project)
+   - Instantly refreshes data for that view
+
+3. **Manual Refresh (Command)**
+   - Open Command Palette (`Ctrl/Cmd + P`)
+   - Run "Refresh All Views" (すべてのビューを更新)
+   - Refreshes all open views at once
 
 ### Daily Note Integration
 

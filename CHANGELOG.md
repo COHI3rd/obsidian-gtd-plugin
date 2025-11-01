@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+#### Auto-Refresh System
+- **🕛 Date Change Detection**: Automatic detection and refresh when date changes
+  - Checks every 60 seconds for date changes
+  - Automatically refreshes all views when midnight passes
+  - Ensures "Today" tasks are always up-to-date
+  - Works even when Obsidian is left open overnight
+- **🔄 Manual Refresh**: Multiple ways to refresh views
+  - Command: "すべてのビューを更新" (Refresh All Views) via Command Palette
+  - UI Button: 🔄 refresh button in each view header
+  - Refreshes task list and project data instantly
+
+### Changed
+- **UI Layout Consistency**: Unified refresh button placement across all views
+  - All views now follow Weekly Review layout structure
+  - ViewSwitcher and 🔄 button on same row (header-top)
+  - Action buttons (Add Task, Add Project, etc.) on separate row below
+  - Consistent visual hierarchy across GTD Main, Weekly Review, and Project views
+
+### Technical
+- Added `midnightCheckInterval` for periodic date checking
+- Added `startMidnightCheck()` and `stopMidnightCheck()` methods in GTDPlugin
+- New command: `gtd-refresh-views`
+- CSS additions:
+  - `.gtd-button--icon` for icon-only buttons
+  - `.gtd-main-view__header-top` for layout consistency
+  - `.gtd-project-view__header-top` for layout consistency
+  - `.gtd-weekly-review__header-top` for layout consistency
+
 ## [1.1.0] - 2025-10-31
 
 ### Added
