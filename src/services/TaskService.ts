@@ -248,7 +248,7 @@ export class TaskService {
 
     // inbox または next-action に移動する場合は日付をクリアし、完了フラグも解除
     if (newStatus === 'inbox' || newStatus === 'next-action' || newStatus === 'waiting' || newStatus === 'someday') {
-      taskModel.setDate(null as any);
+      taskModel.setDate(null);
       // 完了状態から未完了に戻す
       if (taskModel.completed) {
         taskModel.uncomplete();

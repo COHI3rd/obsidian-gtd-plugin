@@ -64,18 +64,8 @@ class GTDView extends ItemView {
 
     // デイリーノート挿入ハンドラ
     const handleInsertToDailyNote = async () => {
-      console.log('handleInsertToDailyNote called');
       const allTasks = await this.taskService.getAllTasks();
-      console.log('All tasks:', allTasks.length);
-
-      const todayCompletedTasks = allTasks.filter(task => {
-        const isToday = task.isToday();
-        const isCompleted = task.completed;
-        console.log(`Task: ${task.title}, isToday: ${isToday}, completed: ${isCompleted}`);
-        return isToday && isCompleted;
-      });
-
-      console.log('Today completed tasks:', todayCompletedTasks.length);
+      const todayCompletedTasks = allTasks.filter(task => task.isToday() && task.completed);
       await this.dailyNoteService.insertCompletedTasksCommand(todayCompletedTasks);
     };
 
@@ -457,12 +447,8 @@ export default class GTDPlugin extends Plugin {
   }
 
   async onunload(): Promise<void> {
-    console.log('Unloading GTD Plugin');
-
-    // ビューをクリーンアップ
-    this.app.workspace.detachLeavesOfType(VIEW_TYPE_GTD);
-    this.app.workspace.detachLeavesOfType(VIEW_TYPE_WEEKLY_REVIEW);
-    this.app.workspace.detachLeavesOfType(VIEW_TYPE_PROJECT);
+    // Obsidianが自動的にビューをクリーンアップするため、
+    // 手動でdetachLeavesOfTypeを呼ぶ必要はない
   }
 
   /**

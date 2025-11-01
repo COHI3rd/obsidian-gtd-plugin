@@ -182,7 +182,7 @@ export class FileService {
 
       const file = this.app.vault.getAbstractFileByPath(task.filePath);
       if (file && file instanceof TFile) {
-        await this.app.vault.delete(file);
+        await this.app.fileManager.trashFile(file);
         new Notice(`タスク「${task.title}」を削除しました`);
       }
     } catch (error) {

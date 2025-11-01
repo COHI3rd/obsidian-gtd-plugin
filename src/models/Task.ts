@@ -94,7 +94,7 @@ export class TaskModel implements Task {
   /**
    * タスクに日付を設定
    */
-  setDate(date: Date): void {
+  setDate(date: Date | null): void {
     this.date = date;
   }
 
