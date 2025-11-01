@@ -203,6 +203,13 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
         />
         <div className="gtd-project-view__header-buttons">
           <button
+            className="gtd-button gtd-button--icon"
+            onClick={loadData}
+            title="ビューを更新"
+          >
+            🔄
+          </button>
+          <button
             className="gtd-button gtd-button--primary"
             onClick={handleCreateProjectClick}
           >

@@ -374,6 +374,16 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
             }}
           />
           <div className="gtd-main-view__header-buttons">
+            <button
+              className="gtd-button gtd-button--icon"
+              onClick={() => {
+                loadTasks();
+                loadProjects();
+              }}
+              title="ビューを更新"
+            >
+              🔄
+            </button>
             <button className="gtd-button gtd-button--primary" onClick={() => {
               loadProjects(); // プロジェクトリストを最新化
               setIsModalOpen(true);

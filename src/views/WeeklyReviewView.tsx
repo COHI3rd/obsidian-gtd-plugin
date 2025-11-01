@@ -170,14 +170,23 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
   return (
     <div className="gtd-weekly-review">
       <div className="gtd-weekly-review__header">
-        <ViewSwitcher
-          currentView="weekly-review"
-          onViewChange={(view) => {
-            if (onViewChange) {
-              onViewChange(view);
-            }
-          }}
-        />
+        <div className="gtd-weekly-review__header-top">
+          <ViewSwitcher
+            currentView="weekly-review"
+            onViewChange={(view) => {
+              if (onViewChange) {
+                onViewChange(view);
+              }
+            }}
+          />
+          <button
+            className="gtd-button gtd-button--icon"
+            onClick={loadData}
+            title="ビューを更新"
+          >
+            🔄
+          </button>
+        </div>
         <p className="gtd-weekly-review__subtitle">
           各リストを見直し、次の一週間の準備をしましょう
         </p>

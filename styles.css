@@ -618,6 +618,18 @@
   background: var(--background-modifier-hover);
 }
 
+.gtd-button--icon {
+  padding: 6px 10px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  font-size: 16px;
+  min-width: auto;
+}
+
+.gtd-button--icon:hover {
+  background: var(--background-modifier-hover);
+}
+
 /* 進捗バー */
 .gtd-progress-bar {
   display: flex;
@@ -1065,6 +1077,13 @@
 
 .gtd-weekly-review__header {
   margin-bottom: 24px;
+}
+
+.gtd-weekly-review__header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
 .gtd-weekly-review__header h2 {

@@ -272,6 +272,8 @@ export default class GTDPlugin extends Plugin {
   settings!: GTDSettings;
   private taskService: TaskService | null = null;
   private dailyNoteService: DailyNoteService | null = null;
+  private midnightCheckInterval: number | null = null;
+  private lastCheckedDate: string = new Date().toDateString();
 
   async onload(): Promise<void> {
     console.log('Loading GTD Plugin');
@@ -365,6 +367,19 @@ export default class GTDPlugin extends Plugin {
     // 設定タブを追加
     this.addSettingTab(new GTDSettingTab(this.app, this));
 
+    // コマンド: ビューを手動更新
+    this.addCommand({
+      id: 'gtd-refresh-views',
+      name: 'すべてのビューを更新',
+      callback: () => {
+        console.log('[GTDPlugin] Manual refresh triggered');
+        this.refreshAllViews();
+      },
+    });
+
+    // 日付変更の自動検知を開始（1分ごとにチェック）
+    this.startMidnightCheck();
+
     // ファイル変更イベントを監視
     this.registerEvent(
       this.app.vault.on('modify', (file) => {
@@ -447,8 +462,42 @@ export default class GTDPlugin extends Plugin {
   }
 
   async onunload(): Promise<void> {
+    // 日付変更チェックを停止
+    this.stopMidnightCheck();
+
     // Obsidianが自動的にビューをクリーンアップするため、
     // 手動でdetachLeavesOfTypeを呼ぶ必要はない
+  }
+
+  /**
+   * 日付変更の自動検知を開始
+   * 1分ごとに日付をチェックし、日付が変わっていたら全ビューをリフレッシュ
+   */
+  startMidnightCheck(): void {
+    console.log('[GTDPlugin] Starting midnight check (checking every 60 seconds)');
+
+    this.midnightCheckInterval = window.setInterval(() => {
+      const currentDate = new Date().toDateString();
+
+      if (currentDate !== this.lastCheckedDate) {
+        console.log(`[GTDPlugin] Date changed from ${this.lastCheckedDate} to ${currentDate}`);
+        console.log('[GTDPlugin] Refreshing all views due to date change');
+
+        this.lastCheckedDate = currentDate;
+        this.refreshAllViews();
+      }
+    }, 60000); // 60秒 = 1分ごと
+  }
+
+  /**
+   * 日付変更チェックを停止
+   */
+  stopMidnightCheck(): void {
+    if (this.midnightCheckInterval !== null) {
+      console.log('[GTDPlugin] Stopping midnight check');
+      window.clearInterval(this.midnightCheckInterval);
+      this.midnightCheckInterval = null;
+    }
   }
 
   /**
