@@ -365,15 +365,15 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
       <div className="gtd-main-view">
         {/* ヘッダー */}
         <div className="gtd-main-view__header">
-          <ViewSwitcher
-            currentView="main"
-            onViewChange={(view) => {
-              if (onViewChange) {
-                onViewChange(view);
-              }
-            }}
-          />
-          <div className="gtd-main-view__header-buttons">
+          <div className="gtd-main-view__header-top">
+            <ViewSwitcher
+              currentView="main"
+              onViewChange={(view) => {
+                if (onViewChange) {
+                  onViewChange(view);
+                }
+              }}
+            />
             <button
               className="gtd-button gtd-button--icon"
               onClick={() => {
@@ -384,6 +384,8 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
             >
               🔄
             </button>
+          </div>
+          <div className="gtd-main-view__header-buttons">
             <button className="gtd-button gtd-button--primary" onClick={() => {
               loadProjects(); // プロジェクトリストを最新化
               setIsModalOpen(true);

@@ -193,15 +193,15 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
     <div className="gtd-project-view">
       {/* ヘッダー */}
       <div className="gtd-project-view__header">
-        <ViewSwitcher
-          currentView="project"
-          onViewChange={(view) => {
-            if (onViewChange) {
-              onViewChange(view);
-            }
-          }}
-        />
-        <div className="gtd-project-view__header-buttons">
+        <div className="gtd-project-view__header-top">
+          <ViewSwitcher
+            currentView="project"
+            onViewChange={(view) => {
+              if (onViewChange) {
+                onViewChange(view);
+              }
+            }}
+          />
           <button
             className="gtd-button gtd-button--icon"
             onClick={loadData}
@@ -209,6 +209,8 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
           >
             🔄
           </button>
+        </div>
+        <div className="gtd-project-view__header-buttons">
           <button
             className="gtd-button gtd-button--primary"
             onClick={handleCreateProjectClick}

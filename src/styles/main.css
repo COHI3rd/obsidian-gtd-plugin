@@ -20,6 +20,12 @@
   border-bottom: 2px solid var(--background-modifier-border);
 }
 
+.gtd-main-view__header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .gtd-main-view__header h2 {
   margin: 0;
   font-size: 24px;
@@ -1332,6 +1338,12 @@
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 2px solid var(--background-modifier-border);
+}
+
+.gtd-project-view__header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .gtd-project-view__header h2 {
