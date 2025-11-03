@@ -8,6 +8,7 @@ import { TaskService } from '../services/TaskService';
 import { ProjectService } from '../services/ProjectService';
 import { FileService } from '../services/FileService';
 import { TaskModel } from '../models/Task';
+import { getText } from '../i18n';
 
 interface GTDMainViewProps {
   taskService: TaskService;
@@ -25,6 +26,7 @@ interface GTDMainViewProps {
  * 2カラムレイアウトでInbox/Today/次に取るべき行動を表示
  */
 export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectService, fileService, settings, onMounted, onInsertToDailyNote, onViewChange, onTaskUpdated }) => {
+  const t = getText(settings.language);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -161,7 +163,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
     }));
   };
 
-  // ドラッグ&ドロップ処理
+  // ドラッグ&ドロップ処理（完全な楽観的更新）
   const handleDragEnd = async (result: DropResult) => {
     const { source, destination, draggableId } = result;
 
@@ -185,43 +187,62 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
       // 異なるグループへの移動
       // 移動先に応じてタスクのステータスと日付を更新
       if (destination.droppableId === 'trash') {
-        // ゴミ箱への移動
-        await taskService.moveTaskToTrash(task.id);
-        // UIから削除（ゴミ箱ビューを実装するまで）
+        // UIから即座に削除
         setTasks(prevTasks => prevTasks.filter(t => t.id !== task.id));
+        // バックグラウンドでゴミ箱に移動（awaitしない）
+        taskService.moveTaskToTrash(task.id).catch(error => {
+          console.error('Failed to move task to trash:', error);
+          loadTasks(); // エラー時のみ再読み込み
+        });
       } else if (destination.droppableId === 'today') {
-        await taskService.moveTaskToToday(task.id);
         // 状態を即座に更新
         setTasks(prevTasks => prevTasks.map(t =>
           t.id === task.id ? new TaskModel({ ...t, status: 'today' as TaskStatus, date: new Date() }) : t
         ));
+        // バックグラウンドで保存
+        taskService.moveTaskToToday(task.id).catch(error => {
+          console.error('Failed to move task to today:', error);
+          loadTasks();
+        });
       } else if (destination.droppableId === 'next-action') {
-        await taskService.changeTaskStatus(task.id, 'next-action');
         setTasks(prevTasks => prevTasks.map(t =>
           t.id === task.id ? new TaskModel({ ...t, status: 'next-action' as TaskStatus }) : t
         ));
+        taskService.changeTaskStatus(task.id, 'next-action').catch(error => {
+          console.error('Failed to change task status:', error);
+          loadTasks();
+        });
       } else if (destination.droppableId === 'inbox') {
-        await taskService.changeTaskStatus(task.id, 'inbox');
         setTasks(prevTasks => prevTasks.map(t =>
           t.id === task.id ? new TaskModel({ ...t, status: 'inbox' as TaskStatus }) : t
         ));
+        taskService.changeTaskStatus(task.id, 'inbox').catch(error => {
+          console.error('Failed to change task status:', error);
+          loadTasks();
+        });
       } else if (destination.droppableId === 'waiting') {
-        await taskService.changeTaskStatus(task.id, 'waiting');
         setTasks(prevTasks => prevTasks.map(t =>
           t.id === task.id ? new TaskModel({ ...t, status: 'waiting' as TaskStatus }) : t
         ));
+        taskService.changeTaskStatus(task.id, 'waiting').catch(error => {
+          console.error('Failed to change task status:', error);
+          loadTasks();
+        });
       } else if (destination.droppableId === 'someday') {
-        await taskService.changeTaskStatus(task.id, 'someday');
         setTasks(prevTasks => prevTasks.map(t =>
           t.id === task.id ? new TaskModel({ ...t, status: 'someday' as TaskStatus }) : t
         ));
+        taskService.changeTaskStatus(task.id, 'someday').catch(error => {
+          console.error('Failed to change task status:', error);
+          loadTasks();
+        });
       }
     } catch (error) {
       console.error('Failed to move task:', error);
     }
   };
 
-  // タスクの順序を更新
+  // タスクの順序を更新（並列実行でちらつき防止）
   const updateTaskOrder = async (droppableId: string, sourceIndex: number, destinationIndex: number) => {
     // 対象グループのタスクを取得（メモ化された値を使用）
     let groupTasks: Task[] = [];
@@ -241,79 +262,85 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
     const [movedTask] = groupTasks.splice(sourceIndex, 1);
     groupTasks.splice(destinationIndex, 0, movedTask);
 
-    // order値を更新
+    // 状態を先に更新（即座にUIに反映）
     const updatedTaskIds = new Set<string>();
-    for (let i = 0; i < groupTasks.length; i++) {
-      const taskModel = new TaskModel({ ...groupTasks[i], order: i });
-      await fileService.updateTask(taskModel);
-      updatedTaskIds.add(taskModel.id);
-    }
+    const updatedGroupTasks = groupTasks.map((t, i) => {
+      updatedTaskIds.add(t.id);
+      return new TaskModel({ ...t, order: i });
+    });
 
-    // 状態を即座に更新（ちらつき防止）
     setTasks(prevTasks => prevTasks.map(t => {
       if (updatedTaskIds.has(t.id)) {
-        const updatedTask = groupTasks.find(gt => gt.id === t.id);
-        return updatedTask ? new TaskModel({ ...updatedTask }) : t;
+        const updatedTask = updatedGroupTasks.find(gt => gt.id === t.id);
+        return updatedTask ? updatedTask : t;
       }
       return t;
     }));
+
+    // バックグラウンドで並列保存（awaitせず、すべて並列実行）
+    Promise.all(
+      updatedGroupTasks.map(taskModel => fileService.updateTask(taskModel))
+    ).catch(error => {
+      console.error('Failed to update task order:', error);
+      loadTasks(); // エラー時のみ再読み込み
+    });
   };
 
-  // タスク完了トグル（楽観的更新でちらつき防止）
+  // タスク完了トグル（完全な楽観的更新）
   const handleToggleComplete = async (taskId: string) => {
-    try {
-      console.log('[GTDMainView] Toggling task completion:', taskId);
+    console.log('[GTDMainView] Toggling task completion:', taskId);
 
-      // 即座にUIを更新（楽観的更新）
-      setTasks(prevTasks => prevTasks.map(t => {
-        if (t.id === taskId) {
-          const updatedTask = new TaskModel({ ...t, completed: !t.completed });
-          return updatedTask;
-        }
-        return t;
-      }));
-
-      // バックグラウンドでファイル更新
-      await taskService.toggleTaskComplete(taskId);
-      console.log('[GTDMainView] Task completion toggled');
-
-      // 他のビューも更新
-      if (onTaskUpdated) {
-        onTaskUpdated();
+    // 即座にUIを更新（楽観的更新）
+    setTasks(prevTasks => prevTasks.map(t => {
+      if (t.id === taskId) {
+        const updatedTask = new TaskModel({ ...t, completed: !t.completed });
+        return updatedTask;
       }
-    } catch (error) {
-      console.error('[GTDMainView] Failed to toggle task:', error);
-      // エラー時は再読み込みして正しい状態に戻す
-      await loadTasks();
-    }
+      return t;
+    }));
+
+    // バックグラウンドでファイル更新（awaitしない）
+    taskService.toggleTaskComplete(taskId)
+      .then(() => {
+        console.log('[GTDMainView] Task completion toggled');
+        // 他のビューも更新
+        if (onTaskUpdated) {
+          onTaskUpdated();
+        }
+      })
+      .catch(error => {
+        console.error('[GTDMainView] Failed to toggle task:', error);
+        // エラー時は再読み込みして正しい状態に戻す
+        loadTasks();
+      });
   };
 
-  // タスクのステータスを変更（右クリックメニュー用・楽観的更新）
+  // タスクのステータスを変更（右クリックメニュー用・完全な楽観的更新）
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
-    try {
-      console.log('[GTDMainView] Changing task status:', taskId, 'to', newStatus);
+    console.log('[GTDMainView] Changing task status:', taskId, 'to', newStatus);
 
-      // 即座にUIを更新（楽観的更新）
-      setTasks(prevTasks => prevTasks.map(t => {
-        if (t.id === taskId) {
-          const updatedTask = new TaskModel({ ...t, status: newStatus });
-          return updatedTask;
-        }
-        return t;
-      }));
-
-      // バックグラウンドでファイル更新
-      await taskService.changeTaskStatus(taskId, newStatus);
-      console.log('[GTDMainView] Task status changed');
-
-      // 他のビューも更新
-      if (onTaskUpdated) {
-        onTaskUpdated();
+    // 即座にUIを更新（楽観的更新）
+    setTasks(prevTasks => prevTasks.map(t => {
+      if (t.id === taskId) {
+        const updatedTask = new TaskModel({ ...t, status: newStatus });
+        return updatedTask;
       }
-    } catch (error) {
-      console.error('[GTDMainView] Failed to change task status:', error);
-      await loadTasks();
-    }
+      return t;
+    }));
+
+    // バックグラウンドでファイル更新（awaitしない）
+    taskService.changeTaskStatus(taskId, newStatus)
+      .then(() => {
+        console.log('[GTDMainView] Task status changed');
+        // 他のビューも更新
+        if (onTaskUpdated) {
+          onTaskUpdated();
+        }
+      })
+      .catch(error => {
+        console.error('[GTDMainView] Failed to change task status:', error);
+        loadTasks();
+      });
   };
 
   // タスクファイルを開く
@@ -371,7 +398,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
   };
 
   if (loading) {
-    return <div className="gtd-loading">読み込み中...</div>;
+    return <div className="gtd-loading">{t.loading}</div>;
   }
 
   return (
@@ -394,7 +421,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                 loadTasks();
                 loadProjects();
               }}
-              title="ビューを更新"
+              title={t.refresh}
             >
               🔄
             </button>
@@ -404,15 +431,15 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
               loadProjects(); // プロジェクトリストを最新化
               setIsModalOpen(true);
             }}>
-              + タスクを追加
+              {t.addTask}
             </button>
             {onInsertToDailyNote && (
               <button
                 className="gtd-button gtd-button--secondary"
                 onClick={onInsertToDailyNote}
-                title="今日の完了タスクをデイリーノートに挿入"
+                title={t.insertToDailyNote}
               >
-                📝 デイリーノートに反映
+                {t.insertToDailyNote}
               </button>
             )}
           </div>
@@ -435,15 +462,15 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                       onClick={() => toggleGroup('today')}
                       style={{ cursor: 'pointer' }}
                     >
-                      <span>{collapsedGroups.today ? '▶' : '▼'}</span> 📅 Today <span className="gtd-section__count">{todayTasks.length}</span>
+                      <span>{collapsedGroups.today ? '▶' : '▼'}</span> {t.today} <span className="gtd-section__count">{todayTasks.length}</span>
                     </h3>
                     {!collapsedGroups.today && (
                       <div className={`gtd-droppable ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}>
                         {todayTasks.length === 0 ? (
                           <div className="gtd-empty-state">
-                            <p>今日のタスクはありません</p>
+                            <p>{t.noTasks}</p>
                             <p className="gtd-empty-state__hint">
-                              右側の「次に取るべき行動」からドラッグ&ドロップで追加
+                              {t.emptyStateHint}
                             </p>
                           </div>
                         ) : (
@@ -502,13 +529,13 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                       onClick={() => toggleGroup('next-action')}
                       style={{ cursor: 'pointer' }}
                     >
-                      <span>{collapsedGroups['next-action'] ? '▶' : '▼'}</span> ▶️ 次に取るべき行動 <span className="gtd-section__count">{nextActionTasks.length}</span>
+                      <span>{collapsedGroups['next-action'] ? '▶' : '▼'}</span> {t.nextAction} <span className="gtd-section__count">{nextActionTasks.length}</span>
                     </h3>
                     {!collapsedGroups['next-action'] && (
                       <div className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}>
                         {nextActionTasks.length === 0 ? (
                           <div className="gtd-empty-state">
-                            <p>タスクがありません</p>
+                            <p>{t.noTasks}</p>
                           </div>
                         ) : (
                           nextActionTasks.map((task, index) => (
@@ -554,13 +581,13 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                       onClick={() => toggleGroup('inbox')}
                       style={{ cursor: 'pointer' }}
                     >
-                      <span>{collapsedGroups.inbox ? '▶' : '▼'}</span> 📥 Inbox <span className="gtd-section__count">{inboxTasks.length}</span>
+                      <span>{collapsedGroups.inbox ? '▶' : '▼'}</span> {t.inbox} <span className="gtd-section__count">{inboxTasks.length}</span>
                     </h3>
                     {!collapsedGroups.inbox && (
                       <div className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}>
                         {inboxTasks.length === 0 ? (
                           <div className="gtd-empty-state">
-                            <p>タスクがありません</p>
+                            <p>{t.noTasks}</p>
                           </div>
                         ) : (
                           inboxTasks.map((task, index) => (
@@ -606,13 +633,13 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                       onClick={() => toggleGroup('waiting')}
                       style={{ cursor: 'pointer' }}
                     >
-                      <span>{collapsedGroups.waiting ? '▶' : '▼'}</span> ⏳ 連絡待ち <span className="gtd-section__count">{waitingTasks.length}</span>
+                      <span>{collapsedGroups.waiting ? '▶' : '▼'}</span> {t.waiting} <span className="gtd-section__count">{waitingTasks.length}</span>
                     </h3>
                     {!collapsedGroups.waiting && (
                       <div className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}>
                         {waitingTasks.length === 0 ? (
                           <div className="gtd-empty-state">
-                            <p>タスクがありません</p>
+                            <p>{t.noTasks}</p>
                           </div>
                         ) : (
                           waitingTasks.map((task, index) => (
@@ -658,13 +685,13 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                       onClick={() => toggleGroup('someday')}
                       style={{ cursor: 'pointer' }}
                     >
-                      <span>{collapsedGroups.someday ? '▶' : '▼'}</span> 💭 いつかやる/多分やる <span className="gtd-section__count">{somedayTasks.length}</span>
+                      <span>{collapsedGroups.someday ? '▶' : '▼'}</span> {t.someday} <span className="gtd-section__count">{somedayTasks.length}</span>
                     </h3>
                     {!collapsedGroups.someday && (
                       <div className={`gtd-droppable gtd-droppable--compact ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over' : ''}`}>
                         {somedayTasks.length === 0 ? (
                           <div className="gtd-empty-state">
-                            <p>タスクがありません</p>
+                            <p>{t.noTasks}</p>
                           </div>
                         ) : (
                           somedayTasks.map((task, index) => (
@@ -708,11 +735,11 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                     <h3
                       className={`gtd-section__title gtd-section__title--trash ${snapshot.isDraggingOver ? 'gtd-section__title--dragging-over-trash' : ''}`}
                     >
-                      🗑️ ゴミ箱
+                      {t.trash}
                     </h3>
                     <div className={`gtd-droppable gtd-droppable--trash ${snapshot.isDraggingOver ? 'gtd-droppable--dragging-over-trash' : ''}`}>
                       <div className="gtd-trash-hint">
-                        タスクをここにドロップして削除
+                        {t.dragToTrash}
                       </div>
                     </div>
                     {provided.placeholder}
