@@ -259,16 +259,23 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
     }));
   };
 
-  // タスク完了トグル
+  // タスク完了トグル（楽観的更新でちらつき防止）
   const handleToggleComplete = async (taskId: string) => {
     try {
       console.log('[GTDMainView] Toggling task completion:', taskId);
-      await taskService.toggleTaskComplete(taskId);
-      console.log('[GTDMainView] Task completion toggled, reloading tasks...');
 
-      // タスク一覧を再読み込みしてプロジェクト進捗も反映
-      await loadTasks();
-      console.log('[GTDMainView] Tasks reloaded');
+      // 即座にUIを更新（楽観的更新）
+      setTasks(prevTasks => prevTasks.map(t => {
+        if (t.id === taskId) {
+          const updatedTask = new TaskModel({ ...t, completed: !t.completed });
+          return updatedTask;
+        }
+        return t;
+      }));
+
+      // バックグラウンドでファイル更新
+      await taskService.toggleTaskComplete(taskId);
+      console.log('[GTDMainView] Task completion toggled');
 
       // 他のビューも更新
       if (onTaskUpdated) {
@@ -281,16 +288,23 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
     }
   };
 
-  // タスクのステータスを変更（右クリックメニュー用）
+  // タスクのステータスを変更（右クリックメニュー用・楽観的更新）
   const handleStatusChange = async (taskId: string, newStatus: TaskStatus) => {
     try {
       console.log('[GTDMainView] Changing task status:', taskId, 'to', newStatus);
-      await taskService.changeTaskStatus(taskId, newStatus);
-      console.log('[GTDMainView] Task status changed, reloading tasks...');
 
-      // タスク一覧を再読み込み
-      await loadTasks();
-      console.log('[GTDMainView] Tasks reloaded');
+      // 即座にUIを更新（楽観的更新）
+      setTasks(prevTasks => prevTasks.map(t => {
+        if (t.id === taskId) {
+          const updatedTask = new TaskModel({ ...t, status: newStatus });
+          return updatedTask;
+        }
+        return t;
+      }));
+
+      // バックグラウンドでファイル更新
+      await taskService.changeTaskStatus(taskId, newStatus);
+      console.log('[GTDMainView] Task status changed');
 
       // 他のビューも更新
       if (onTaskUpdated) {

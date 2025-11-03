@@ -129,6 +129,11 @@ export interface WeeklyReviewFrontmatter {
 export type DailyNoteMode = 'none' | 'auto-write' | 'dataview' | 'command';
 
 /**
+ * 言語設定
+ */
+export type Language = 'ja' | 'en';
+
+/**
  * プラグイン設定
  */
 export interface GTDSettings {
@@ -142,4 +147,5 @@ export interface GTDSettings {
   dailyNoteMode: DailyNoteMode;  // デイリーノート連携モード
   dailyNoteFolder: string;       // デイリーノートフォルダ
   dailyNoteDateFormat: string;   // デイリーノートの日付フォーマット
+  language: Language;            // 表示言語
 }

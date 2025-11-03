@@ -1,6 +1,7 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type GTDPlugin from './main';
 import { GTDSettings } from './types';
+import { getText } from './i18n';
 
 /**
  * デフォルト設定
@@ -16,6 +17,7 @@ export const DEFAULT_SETTINGS: GTDSettings = {
   dailyNoteMode: 'command',
   dailyNoteFolder: '',
   dailyNoteDateFormat: 'YYYY-MM-DD',
+  language: 'ja',
 };
 
 /**
@@ -33,12 +35,33 @@ export class GTDSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl('h2', { text: 'GTD プラグイン設定' });
+    const t = getText(this.plugin.settings.language);
+
+    containerEl.createEl('h2', { text: t.settingsTitle });
+
+    // 言語設定
+    new Setting(containerEl)
+      .setName(t.language)
+      .setDesc(t.languageDesc)
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions({
+            ja: '日本語 (Japanese)',
+            en: 'English',
+          })
+          .setValue(this.plugin.settings.language)
+          .onChange(async (value: any) => {
+            this.plugin.settings.language = value;
+            await this.plugin.saveSettings();
+            // 設定画面を再描画
+            this.display();
+          })
+      );
 
     // タスクフォルダ
     new Setting(containerEl)
-      .setName('タスクフォルダ')
-      .setDesc('タスクファイルを保存するフォルダパス')
+      .setName(t.taskFolder)
+      .setDesc(t.taskFolderDesc)
       .addText((text) =>
         text
           .setPlaceholder('GTD/Tasks')
@@ -51,8 +74,8 @@ export class GTDSettingTab extends PluginSettingTab {
 
     // プロジェクトフォルダ
     new Setting(containerEl)
-      .setName('プロジェクトフォルダ')
-      .setDesc('プロジェクトファイルを保存するフォルダパス')
+      .setName(t.projectFolder)
+      .setDesc(t.projectFolderDesc)
       .addText((text) =>
         text
           .setPlaceholder('GTD/Projects')
@@ -65,8 +88,8 @@ export class GTDSettingTab extends PluginSettingTab {
 
     // レビューフォルダ
     new Setting(containerEl)
-      .setName('週次レビューフォルダ')
-      .setDesc('週次レビューファイルを保存するフォルダパス')
+      .setName(t.reviewFolder)
+      .setDesc(t.reviewFolderDesc)
       .addText((text) =>
         text
           .setPlaceholder('GTD/Reviews')
@@ -79,8 +102,8 @@ export class GTDSettingTab extends PluginSettingTab {
 
     // 日付フォーマット
     new Setting(containerEl)
-      .setName('日付フォーマット')
-      .setDesc('日付の表示形式（date-fns形式）')
+      .setName(t.dateFormat)
+      .setDesc(t.dateFormatDesc)
       .addText((text) =>
         text
           .setPlaceholder('yyyy-MM-dd')
@@ -93,8 +116,8 @@ export class GTDSettingTab extends PluginSettingTab {
 
     // 自動日付入力
     new Setting(containerEl)
-      .setName('自動日付入力')
-      .setDesc('Todayにドラッグした際に自動で今日の日付を設定')
+      .setName(t.enableAutoDate)
+      .setDesc(t.enableAutoDateDesc)
       .addToggle((toggle) =>
         toggle
           .setValue(this.plugin.settings.enableAutoDate)
@@ -106,14 +129,14 @@ export class GTDSettingTab extends PluginSettingTab {
 
     // デフォルト優先度
     new Setting(containerEl)
-      .setName('デフォルト優先度')
-      .setDesc('新規タスクのデフォルト優先度')
+      .setName(t.defaultPriority)
+      .setDesc(t.defaultPriorityDesc)
       .addDropdown((dropdown) =>
         dropdown
           .addOptions({
-            low: '低',
-            medium: '中',
-            high: '高',
+            low: t.priorityLow,
+            medium: t.priorityMedium,
+            high: t.priorityHigh,
           })
           .setValue(this.plugin.settings.defaultPriority)
           .onChange(async (value: any) => {
@@ -124,13 +147,13 @@ export class GTDSettingTab extends PluginSettingTab {
 
     // タスク並び替えモード
     new Setting(containerEl)
-      .setName('タスク並び替えモード')
-      .setDesc('タスクの表示順序を手動で並び替えるか、自動でソートするか')
+      .setName(t.taskSortMode)
+      .setDesc(t.taskSortModeDesc)
       .addDropdown((dropdown) =>
         dropdown
           .addOptions({
-            manual: '手動並び替え（ドラッグで順序変更）',
-            auto: '自動並び替え（優先度・日付順）',
+            manual: t.taskSortModeManual,
+            auto: t.taskSortModeAuto,
           })
           .setValue(this.plugin.settings.taskSortMode)
           .onChange(async (value: any) => {
@@ -140,18 +163,18 @@ export class GTDSettingTab extends PluginSettingTab {
       );
 
     // デイリーノート連携
-    containerEl.createEl('h3', { text: 'デイリーノート連携' });
+    containerEl.createEl('h3', { text: t.dailyNoteIntegration });
 
     new Setting(containerEl)
-      .setName('連携モード')
-      .setDesc('完了タスクをデイリーノートに反映する方法を選択')
+      .setName(t.dailyNoteMode)
+      .setDesc(t.dailyNoteModeDesc)
       .addDropdown((dropdown) =>
         dropdown
           .addOptions({
-            none: 'なし（連携しない）',
-            'auto-write': '自動書き込み（完了時にデイリーノートに追記）',
-            dataview: 'Dataview参照（推奨）',
-            command: 'コマンド実行（手動で挿入）',
+            none: t.dailyNoteModeNone,
+            'auto-write': t.dailyNoteModeAutoWrite,
+            dataview: t.dailyNoteModeDataview,
+            command: t.dailyNoteModeCommand,
           })
           .setValue(this.plugin.settings.dailyNoteMode)
           .onChange(async (value: any) => {
@@ -161,8 +184,8 @@ export class GTDSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('デイリーノートフォルダ')
-      .setDesc('デイリーノートが保存されているフォルダ（空欄の場合はVaultルート）')
+      .setName(t.dailyNoteFolder)
+      .setDesc(t.dailyNoteFolderDesc)
       .addText((text) =>
         text
           .setPlaceholder('Daily Notes')
@@ -174,8 +197,8 @@ export class GTDSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('デイリーノート日付フォーマット')
-      .setDesc('デイリーノートのファイル名に使用される日付フォーマット（例: YYYY-MM-DD, YYYY年MM月DD日）※YYYY/yyyyどちらも対応')
+      .setName(t.dailyNoteDateFormat)
+      .setDesc(t.dailyNoteDateFormatDesc)
       .addText((text) =>
         text
           .setPlaceholder('YYYY-MM-DD')
@@ -187,18 +210,18 @@ export class GTDSettingTab extends PluginSettingTab {
       );
 
     // 使い方
-    containerEl.createEl('h3', { text: '使い方' });
+    containerEl.createEl('h3', { text: t.usage });
     containerEl.createEl('p', {
-      text: '1. コマンドパレット（Ctrl/Cmd + P）から「GTDビューを開く」を実行',
+      text: t.usageStep1,
     });
     containerEl.createEl('p', {
-      text: '2. Inboxに思いついたタスクを追加',
+      text: t.usageStep2,
     });
     containerEl.createEl('p', {
-      text: '3. タスクをドラッグ&ドロップで「次に取るべき行動」または「Today」に移動',
+      text: t.usageStep3,
     });
     containerEl.createEl('p', {
-      text: '4. Todayのタスクを実行してチェックボックスをオン',
+      text: t.usageStep4,
     });
   }
 }
