@@ -76,6 +76,17 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
         }
         return false;
       });
+
+      // 完了日付順にソート（新しい順）
+      completed.sort((a, b) => {
+        // ファイルパスから完了日付を抽出
+        const dateMatchA = a.filePath.match(/完了[/\\](\d{4}-\d{2}-\d{2})/);
+        const dateMatchB = b.filePath.match(/完了[/\\](\d{4}-\d{2}-\d{2})/);
+        const dateA = dateMatchA ? new Date(dateMatchA[1]) : new Date(0);
+        const dateB = dateMatchB ? new Date(dateMatchB[1]) : new Date(0);
+        return dateB.getTime() - dateA.getTime(); // 降順（新しい順）
+      });
+
       setCompletedThisWeek(completed);
     } catch (error) {
       console.error('Failed to load weekly review data:', error);

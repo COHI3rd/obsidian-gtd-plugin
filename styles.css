@@ -9,6 +9,7 @@
   overflow: hidden;
   container-type: inline-size;
   container-name: gtd-view;
+  box-sizing: border-box;
 }
 
 .gtd-main-view__header {
@@ -188,11 +189,12 @@
 .gtd-task-card--dragging {
   opacity: 0.95;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  transform: rotate(3deg) scale(1.02);
+  transform: rotate(3deg) scale(1.02) !important;
   cursor: grabbing !important;
   background: var(--background-secondary);
   border: 2px solid var(--interactive-accent);
-  z-index: 9999;
+  z-index: 9999 !important;
+  position: relative !important;
 }
 
 /* ドラッグ中の元の位置に表示されるプレースホルダー */
@@ -1091,8 +1093,9 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 12px;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .gtd-weekly-review__header {
@@ -1401,8 +1404,9 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 12px;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .gtd-project-view__header {
