@@ -24,6 +24,16 @@ All notable changes to this project will be documented in this file.
   - Action buttons (Add Task, Add Project, etc.) on separate row below
   - Consistent visual hierarchy across GTD Main, Weekly Review, and Project views
 
+### Fixed
+- **Today Task Date Assignment**: Tasks added directly to "Today" via Quick Add now correctly receive today's date
+  - Previously, tasks created with `status: 'today'` had no date assigned, causing them not to appear in Today section
+  - Now auto-assigns today's date when status is 'today' but date is not provided
+- **Drag Position Offset**: Improved drag-and-drop visual feedback (partial fix)
+  - Fixed: Dragging card position now correctly follows cursor in all groups except the original group
+  - Known issue: Card not visible when dragging within its original group (non-critical, other groups work correctly)
+  - Applied container offset correction in handleDragStart
+  - Used CSS class-based placeholder hiding with !important priority
+
 ### Technical
 - Added `midnightCheckInterval` for periodic date checking
 - Added `startMidnightCheck()` and `stopMidnightCheck()` methods in GTDPlugin
@@ -33,6 +43,10 @@ All notable changes to this project will be documented in this file.
   - `.gtd-main-view__header-top` for layout consistency
   - `.gtd-project-view__header-top` for layout consistency
   - `.gtd-weekly-review__header-top` for layout consistency
+  - `.gtd-dragging-placeholder` for hiding placeholder during drag
+- Enhanced TaskService.createTask to auto-set date for 'today' status
+- Modified handleDragStart in GTDMainView for position correction
+- Added placeholder cleanup in handleDragEnd
 
 ## [1.1.0] - 2025-10-31
 

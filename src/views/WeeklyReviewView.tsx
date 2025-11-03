@@ -46,9 +46,11 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
   const [selectedSection, setSelectedSection] = useState<'someday' | 'waiting' | 'projects' | 'completed'>('completed');
 
   // データを読み込み
-  const loadData = async () => {
+  const loadData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
 
       // タスクを読み込み
       const tasks = await taskService.getAllTasks();
@@ -93,14 +95,16 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
     } catch (error) {
       console.error('Failed to load weekly review data:', error);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     loadData();
-    // 親コンポーネントにリフレッシュ関数を渡す
-    onMounted?.(loadData);
+    // 親コンポーネントにリフレッシュ関数を渡す（サイレントモードで）
+    onMounted?.(() => loadData(true));
   }, []);
 
   // タスクステータスを変更（次に取るべき行動に移動）
@@ -108,7 +112,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
     try {
       task.changeStatus('next-action');
       await taskService.updateTask(task);
-      await loadData();
+      await loadData(true);
       onRefresh?.();
     } catch (error) {
       console.error('Failed to move task to next-action:', error);
@@ -119,7 +123,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
   const archiveTask = async (task: Task) => {
     try {
       await taskService.deleteTask(task.id);
-      await loadData();
+      await loadData(true);
       onRefresh?.();
     } catch (error) {
       console.error('Failed to archive task:', error);
@@ -132,7 +136,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       task.changeStatus('today');
       task.setDate(new Date());
       await taskService.updateTask(task);
-      await loadData();
+      await loadData(true);
       onRefresh?.();
     } catch (error) {
       console.error('Failed to move task to today:', error);
@@ -144,7 +148,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
     try {
       task.changeStatus('inbox');
       await taskService.updateTask(task);
-      await loadData();
+      await loadData(true);
       onRefresh?.();
     } catch (error) {
       console.error('Failed to move task to inbox:', error);
@@ -159,7 +163,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       console.log('[WeeklyReview] New completed state:', task.completed);
       await taskService.updateTask(task);
       console.log('[WeeklyReview] Task updated, reloading...');
-      await loadData();
+      await loadData(true);
       onRefresh?.();
       console.log('[WeeklyReview] Data reloaded');
 
@@ -195,7 +199,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
           />
           <button
             className="gtd-button gtd-button--icon"
-            onClick={loadData}
+            onClick={() => loadData(true)}
             title={t.refresh}
           >
             🔄
@@ -314,7 +318,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
                     onToggleComplete={async () => {
                       task.completed ? task.uncomplete() : task.complete();
                       await taskService.updateTask(task);
-                      await loadData();
+                      await loadData(true);
                       onRefresh?.();
                     }}
                     onDelete={() => archiveTask(task)}
@@ -373,7 +377,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
                     onToggleComplete={async () => {
                       task.completed ? task.uncomplete() : task.complete();
                       await taskService.updateTask(task);
-                      await loadData();
+                      await loadData(true);
                       onRefresh?.();
                     }}
                     onDelete={() => archiveTask(task)}

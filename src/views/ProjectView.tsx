@@ -41,9 +41,11 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // データを読み込み
-  const loadData = async () => {
+  const loadData = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       console.log('[ProjectView] Loading data...');
 
       // プロジェクトとタスクを読み込み
@@ -62,15 +64,17 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
     } catch (error) {
       console.error('Failed to load projects:', error);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
     loadData();
-    // リフレッシュ関数を親コンポーネントに渡す
+    // リフレッシュ関数を親コンポーネントに渡す（サイレントモードで）
     if (onMounted) {
-      onMounted(loadData);
+      onMounted(() => loadData(true));
     }
   }, []);
 
@@ -129,7 +133,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
       });
 
       console.log('Project created:', newProject);
-      await loadData();
+      await loadData(true);
 
       if (newProject) {
         await openProject(newProject);
@@ -145,7 +149,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
     try {
       project.changeStatus(newStatus);
       await projectService.updateProject(project);
-      await loadData();
+      await loadData(true);
     } catch (error) {
       console.error('Failed to update project status:', error);
     }
@@ -156,7 +160,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
     try {
       const updatedProject = { ...project, importance: newImportance };
       await projectService.updateProject(updatedProject as Project);
-      await loadData();
+      await loadData(true);
     } catch (error) {
       console.error('Failed to update project importance:', error);
     }
@@ -171,7 +175,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
       console.log('[ProjectView] New completed state:', task.completed);
       await taskService.updateTask(task);
       console.log('[ProjectView] Task updated in file, reloading...');
-      await loadData();
+      await loadData(true);
       console.log('[ProjectView] Data reloaded');
 
       // 他のビューも更新
@@ -207,7 +211,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
           />
           <button
             className="gtd-button gtd-button--icon"
-            onClick={loadData}
+            onClick={() => loadData(true)}
             title={t.refresh}
           >
             🔄

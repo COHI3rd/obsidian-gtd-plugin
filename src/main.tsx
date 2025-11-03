@@ -100,7 +100,7 @@ class GTDView extends ItemView {
   }
 
   async onOpen(): Promise<void> {
-    const container = this.containerEl.children[1];
+    const container = this.containerEl.children[1] as HTMLElement;
     container.empty();
 
     // デイリーノート挿入ハンドラ
@@ -513,6 +513,11 @@ export default class GTDPlugin extends Plugin {
         }
       })
     );
+
+    // ワークスペースが完全に読み込まれた後、GTDビューを開く
+    this.app.workspace.onLayoutReady(() => {
+      this.activateView();
+    });
 
     console.log('GTD Plugin loaded successfully');
   }

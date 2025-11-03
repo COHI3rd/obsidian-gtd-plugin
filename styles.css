@@ -1,15 +1,37 @@
 /* ===== GTD Plugin Styles ===== */
 
+/* ドラッグ中の要素を最前面に表示 */
+div[style*="position: fixed"][style*="pointer-events"] {
+  z-index: 999999 !important;
+  pointer-events: auto !important;
+}
+
+/* より確実に：position:fixedの全ての子孫要素も最前面に */
+div[style*="position: fixed"] .gtd-task-card {
+  z-index: 999999 !important;
+}
+
+/* ドラッグ中のプレースホルダーを非表示にする */
+.gtd-dragging-placeholder {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 /* メインビュー */
 .gtd-main-view {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 12px;
+  padding: 0; /* ドラッグ位置ずれ防止のため削除 */
   overflow: hidden;
   container-type: inline-size;
   container-name: gtd-view;
   box-sizing: border-box;
+  /* ドラッグ位置の計算を正確にするため */
+  position: relative;
+  transform: translate3d(0, 0, 0);
+  will-change: auto;
 }
 
 .gtd-main-view__header {
@@ -17,7 +39,7 @@
   flex-direction: column;
   gap: 10px;
   margin-bottom: 12px;
-  padding-bottom: 10px;
+  padding: 12px 12px 10px 12px; /* 上左右にpadding追加 */
   border-bottom: 2px solid var(--background-modifier-border);
   flex-shrink: 0;
 }
@@ -50,6 +72,7 @@
   flex: 1;
   overflow: hidden;
   min-height: 0;
+  padding: 0 12px 12px 12px; /* 左右下にpadding追加 */
 }
 
 .gtd-main-view__left,
@@ -177,19 +200,19 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  position: relative;
+  /* position: relative; */ /* ドラッグ位置ずれの原因のため削除 */
 }
 
 .gtd-task-card:hover {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
   border-color: var(--text-accent);
-  transform: translateX(2px);
+  /* transform: translateX(2px); */ /* ドラッグとの干渉を防ぐため無効化 */
 }
 
 .gtd-task-card--dragging {
   opacity: 0.85;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transform: rotate(2deg);
+  /* transform は@hello-pangea/dndが自動で適用するため、ここでは指定しない */
 }
 
 /* ドラッグ中の元の位置に表示されるプレースホルダー */
@@ -286,13 +309,14 @@
 }
 
 .gtd-task-card__drag-handle {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+  /* flexboxの末尾に配置（position:absoluteは使わない） */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
   color: var(--text-muted);
   font-size: 16px;
   cursor: grab;
+  margin-left: auto;
 }
 
 .gtd-task-card__drag-handle:active {
@@ -320,7 +344,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border-radius: 10px;
   margin-bottom: 9px;
-  position: relative;
+  /* position: relative; */ /* ドラッグ位置ずれの原因のため削除 */
   overflow: hidden;
 }
 
@@ -338,7 +362,8 @@
 
 /* Todayカードの外枠を強調 */
 .gtd-task-card--today::before {
-  content: '';
+  /* position:absoluteがドラッグ位置ずれの原因のため無効化 */
+  /* content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -346,13 +371,13 @@
   bottom: 0;
   border: 1px solid var(--background-modifier-border);
   border-radius: 10px;
-  pointer-events: none;
+  pointer-events: none; */
 }
 
 .gtd-task-card--today:hover {
   border-color: var(--text-accent);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+  /* transform: translateY(-2px); */ /* ドラッグとの干渉を防ぐため無効化 */
   transition: all 0.2s ease;
 }
 

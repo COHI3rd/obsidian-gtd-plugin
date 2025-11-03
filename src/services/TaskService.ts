@@ -110,13 +110,17 @@ export class TaskService {
         throw new GTDError(ErrorType.VALIDATION_ERROR, 'タスクのタイトルは必須です');
       }
 
+      // statusがtodayの場合、dateが未指定なら今日の日付を自動設定
+      const finalStatus = data.status || 'inbox';
+      const finalDate = data.date || (finalStatus === 'today' ? new Date() : null);
+
       const task = new TaskModel({
         id: Date.now().toString(),
         title: data.title,
-        status: data.status || 'inbox',
+        status: finalStatus,
         priority: data.priority || 'medium',
         project: data.project || null,
-        date: data.date || null,
+        date: finalDate,
         completed: false,
         tags: [],
         notes: '',

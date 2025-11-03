@@ -42,15 +42,19 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
   const [isResizing, setIsResizing] = useState(false);
 
   // タスク一覧を読み込み
-  const loadTasks = async () => {
+  const loadTasks = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       const allTasks = await taskService.getAllTasks();
       setTasks(allTasks);
     } catch (error) {
       console.error('Failed to load tasks:', error);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   };
 
@@ -68,9 +72,9 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
     loadTasks();
     loadProjects();
 
-    // リフレッシュ関数を親コンポーネントに渡す
+    // リフレッシュ関数を親コンポーネントに渡す（サイレントモードで）
     if (onMounted) {
-      onMounted(loadTasks);
+      onMounted(() => loadTasks(true));
     }
 
     // ビューの幅をログ出力（デバッグ用）
@@ -165,9 +169,90 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
     }));
   };
 
+  // ドラッグ開始時の補正（即座に実行）
+  const handleDragStart = (result: any) => {
+    // Container のオフセットを保存
+    const container = document.querySelector('.gtd-main-view');
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const offsetLeft = containerRect.left;
+    const offsetTop = containerRect.top;
+
+    // ドラッグされている元のタスクカード（プレースホルダー）を探す
+    const draggableId = result.draggableId;
+
+    // requestAnimationFrame で次のフレームで補正
+    // （@hello-pangea/dnd がDOMを更新した直後）
+    requestAnimationFrame(() => {
+      // プレースホルダー要素を探して非表示クラスを追加
+      const placeholder = document.querySelector(`[data-rbd-draggable-id="${draggableId}"]`) as HTMLElement;
+      if (placeholder) {
+        placeholder.classList.add('gtd-dragging-placeholder');
+      }
+
+      // ドラッグ中の要素（position: fixed）を探して位置を補正
+      const draggingElement = document.querySelector('[style*="position: fixed"]') as HTMLElement;
+      if (draggingElement) {
+        const currentLeft = parseFloat(draggingElement.style.left);
+        const currentTop = parseFloat(draggingElement.style.top);
+
+        // 補正を適用
+        draggingElement.style.left = `${currentLeft - offsetLeft}px`;
+        draggingElement.style.top = `${currentTop - offsetTop}px`;
+
+        // z-index を最大値に設定して確実に最前面に表示
+        draggingElement.style.setProperty('z-index', '999999', 'important');
+        draggingElement.style.setProperty('pointer-events', 'auto', 'important');
+
+        // 補正済みフラグ
+        draggingElement.setAttribute('data-gtd-position-corrected', 'true');
+
+        console.log('[GTD] Drag start corrected:', {
+          offset: { left: offsetLeft, top: offsetTop },
+          before: { left: currentLeft, top: currentTop },
+          after: { left: currentLeft - offsetLeft, top: currentTop - offsetTop },
+          placeholderFound: !!placeholder
+        });
+      }
+    });
+  };
+
+  // ドラッグ中の位置補正（念のため）
+  const handleDragUpdate = (update: any) => {
+    const draggingElement = document.querySelector('[style*="position: fixed"]') as HTMLElement;
+    if (!draggingElement) return;
+
+    // 既に補正済みならスキップ
+    if (draggingElement.getAttribute('data-gtd-position-corrected') === 'true') return;
+
+    // まだ補正されていない場合のみ補正
+    const container = document.querySelector('.gtd-main-view');
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const currentLeft = parseFloat(draggingElement.style.left);
+    const currentTop = parseFloat(draggingElement.style.top);
+
+    // 大きな値（未補正）の場合のみ補正
+    if (currentLeft > 200) {
+      draggingElement.style.left = `${currentLeft - containerRect.left}px`;
+      draggingElement.style.top = `${currentTop - containerRect.top}px`;
+      draggingElement.setAttribute('data-gtd-position-corrected', 'true');
+
+      console.log('[GTD] Drag update corrected (fallback)');
+    }
+  };
+
   // ドラッグ&ドロップ処理（完全な楽観的更新）
   const handleDragEnd = async (result: DropResult) => {
     const { source, destination, draggableId } = result;
+
+    // プレースホルダーの非表示クラスを削除（クリーンアップ）
+    const placeholder = document.querySelector(`[data-rbd-draggable-id="${draggableId}"]`) as HTMLElement;
+    if (placeholder) {
+      placeholder.classList.remove('gtd-dragging-placeholder');
+    }
 
     if (!destination) return;
 
@@ -194,7 +279,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         // バックグラウンドでゴミ箱に移動（awaitしない）
         taskService.moveTaskToTrash(task.id).catch(error => {
           console.error('Failed to move task to trash:', error);
-          loadTasks(); // エラー時のみ再読み込み
+          loadTasks(true); // エラー時のみサイレント再読み込み
         });
       } else if (destination.droppableId === 'today') {
         // 状態を即座に更新
@@ -204,7 +289,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         // バックグラウンドで保存
         taskService.moveTaskToToday(task.id).catch(error => {
           console.error('Failed to move task to today:', error);
-          loadTasks();
+          loadTasks(true);
         });
       } else if (destination.droppableId === 'next-action') {
         setTasks(prevTasks => prevTasks.map(t =>
@@ -212,7 +297,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         ));
         taskService.changeTaskStatus(task.id, 'next-action').catch(error => {
           console.error('Failed to change task status:', error);
-          loadTasks();
+          loadTasks(true);
         });
       } else if (destination.droppableId === 'inbox') {
         setTasks(prevTasks => prevTasks.map(t =>
@@ -220,7 +305,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         ));
         taskService.changeTaskStatus(task.id, 'inbox').catch(error => {
           console.error('Failed to change task status:', error);
-          loadTasks();
+          loadTasks(true);
         });
       } else if (destination.droppableId === 'waiting') {
         setTasks(prevTasks => prevTasks.map(t =>
@@ -228,7 +313,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         ));
         taskService.changeTaskStatus(task.id, 'waiting').catch(error => {
           console.error('Failed to change task status:', error);
-          loadTasks();
+          loadTasks(true);
         });
       } else if (destination.droppableId === 'someday') {
         setTasks(prevTasks => prevTasks.map(t =>
@@ -236,7 +321,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         ));
         taskService.changeTaskStatus(task.id, 'someday').catch(error => {
           console.error('Failed to change task status:', error);
-          loadTasks();
+          loadTasks(true);
         });
       }
     } catch (error) {
@@ -284,7 +369,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
       updatedGroupTasks.map(taskModel => fileService.updateTask(taskModel))
     ).catch(error => {
       console.error('Failed to update task order:', error);
-      loadTasks(); // エラー時のみ再読み込み
+      loadTasks(true); // エラー時のみサイレント再読み込み
     });
   };
 
@@ -310,8 +395,8 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
       })
       .catch(error => {
         console.error('[GTDMainView] Failed to toggle task:', error);
-        // エラー時は再読み込みして正しい状態に戻す
-        loadTasks();
+        // エラー時はサイレント再読み込みして正しい状態に戻す（ローディング表示なし）
+        loadTasks(true);
       });
   };
 
@@ -336,7 +421,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
       })
       .catch(error => {
         console.error('[GTDMainView] Failed to change task status:', error);
-        loadTasks();
+        loadTasks(true);
       });
   };
 
@@ -388,7 +473,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
   const handleQuickAdd = async (title: string, status: TaskStatus, priority: TaskPriority, project?: string) => {
     try {
       await taskService.createTask({ title, status, priority, project });
-      await loadTasks();
+      await loadTasks(true); // サイレント再読み込み
     } catch (error) {
       console.error('Failed to create task:', error);
     }
@@ -399,7 +484,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
   }
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
+    <DragDropContext onDragStart={handleDragStart} onDragUpdate={handleDragUpdate} onDragEnd={handleDragEnd}>
       <div className="gtd-main-view">
         {/* ヘッダー */}
         <div className="gtd-main-view__header">
@@ -416,7 +501,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
             <button
               className="gtd-button gtd-button--icon"
               onClick={() => {
-                loadTasks();
+                loadTasks(true); // サイレントリフレッシュ
                 loadProjects();
               }}
               title={t.refresh}
