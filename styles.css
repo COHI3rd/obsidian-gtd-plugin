@@ -5,7 +5,7 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 12px;
   overflow: hidden;
   container-type: inline-size;
   container-name: gtd-view;
@@ -14,10 +14,11 @@
 .gtd-main-view__header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 2px solid var(--background-modifier-border);
+  flex-shrink: 0;
 }
 
 .gtd-main-view__header-top {
@@ -44,7 +45,7 @@
 .gtd-main-view__content {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 12px;
   flex: 1;
   overflow: hidden;
   min-height: 0;
@@ -127,6 +128,8 @@
   border-radius: 8px;
   min-height: 200px;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
 }
 
 /* セクションラッパー */
@@ -183,9 +186,20 @@
 }
 
 .gtd-task-card--dragging {
-  opacity: 0.85;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transform: rotate(2deg);
+  opacity: 0.95;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transform: rotate(3deg) scale(1.02);
+  cursor: grabbing !important;
+  background: var(--background-secondary);
+  border: 2px solid var(--interactive-accent);
+  z-index: 9999;
+}
+
+/* ドラッグ中の元の位置に表示されるプレースホルダー */
+.gtd-task-card--placeholder {
+  opacity: 0.3;
+  border: 2px dashed var(--interactive-accent);
+  background: var(--background-modifier-hover);
 }
 
 .gtd-task-card--completed {
@@ -962,11 +976,11 @@
 
   /* 1列レイアウト時: ドロップエリアの最小高さを確保してドラッグ可能に */
   .gtd-droppable {
-    min-height: 150px;
+    min-height: 300px;
   }
 
   .gtd-droppable--compact {
-    min-height: 100px;
+    min-height: 150px;
   }
 }
 
@@ -1064,11 +1078,11 @@
 
   /* 1列レイアウト時: ドロップエリアの最小高さを確保してドラッグ可能に */
   .gtd-droppable {
-    min-height: 150px;
+    min-height: 300px;
   }
 
   .gtd-droppable--compact {
-    min-height: 100px;
+    min-height: 150px;
   }
 }
 
@@ -1200,6 +1214,66 @@
   background: var(--background-secondary);
   border-radius: 8px;
   border: 1px solid var(--background-modifier-border);
+}
+
+.gtd-weekly-review__completed-task {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 36px;
+}
+
+.gtd-weekly-review__completed-task:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+
+.gtd-weekly-review__completed-task-checkbox {
+  flex-shrink: 0;
+}
+
+.gtd-weekly-review__completed-task-checkbox input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.gtd-weekly-review__completed-task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.gtd-weekly-review__completed-task-title {
+  font-size: 14px;
+  color: var(--text-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gtd-weekly-review__completed-task-meta {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.gtd-weekly-review__completed-date {
+  color: var(--text-success);
+}
+
+.gtd-weekly-review__completed-project {
+  color: var(--text-accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .gtd-weekly-review__task-actions {

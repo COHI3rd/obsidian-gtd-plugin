@@ -236,23 +236,42 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
             </div>
           ) : (
             <div className="gtd-weekly-review__tasks">
-              {completedThisWeek.map(task => (
-                <div key={task.id} className="gtd-weekly-review__task-item">
-                  <TaskCard
-                    task={task}
-                    onToggleComplete={async () => {
-                      // 完了タスクの再トグルは不要
-                    }}
-                    onOpenTask={async () => {
+              {completedThisWeek.map(task => {
+                // 完了日付を取得（ファイルパスから抽出）
+                const completedDateMatch = task.filePath.match(/完了[/\\](\d{4}-\d{2}-\d{2})/);
+                const completedDate = completedDateMatch ? completedDateMatch[1] : '';
+
+                return (
+                  <div
+                    key={task.id}
+                    className="gtd-weekly-review__completed-task"
+                    onClick={async () => {
                       const file = fileService.getApp().vault.getAbstractFileByPath(task.filePath);
                       if (file) {
                         await fileService.getApp().workspace.getLeaf(false).openFile(file as any);
                       }
                     }}
-                    compact={true}
-                  />
-                </div>
-              ))}
+                  >
+                    <div className="gtd-weekly-review__completed-task-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={true}
+                        readOnly
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className="gtd-weekly-review__completed-task-content">
+                      <span className="gtd-weekly-review__completed-task-title">{task.title}</span>
+                      <div className="gtd-weekly-review__completed-task-meta">
+                        <span className="gtd-weekly-review__completed-date">✓ {completedDate}</span>
+                        {task.project && (
+                          <span className="gtd-weekly-review__completed-project">🎯 {task.project}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
