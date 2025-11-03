@@ -46,6 +46,47 @@ class GTDView extends ItemView {
     this.refreshCallback = callback;
   }
 
+  /**
+   * ビューを再レンダリング（言語変更時などに使用）
+   */
+  rerender(): void {
+    if (this.root) {
+      const container = this.containerEl.children[1];
+
+      // デイリーノート挿入ハンドラ
+      const handleInsertToDailyNote = async () => {
+        const allTasks = await this.taskService.getAllTasks();
+        const todayCompletedTasks = allTasks.filter(task => task.isToday() && task.completed);
+        await this.dailyNoteService.insertCompletedTasksCommand(todayCompletedTasks);
+      };
+
+      // ビュー切り替えハンドラ
+      const handleViewChange = async (view: string) => {
+        if (view === 'weekly-review') {
+          await this.plugin.activateWeeklyReviewView();
+        } else if (view === 'project') {
+          await this.plugin.activateProjectView();
+        }
+      };
+
+      // 再レンダリング
+      this.root.render(
+        <React.StrictMode>
+          <GTDMainView
+            taskService={this.taskService}
+            projectService={this.projectService}
+            fileService={this.fileService}
+            settings={this.plugin.settings}
+            onMounted={(refreshFn) => this.setRefreshCallback(refreshFn)}
+            onInsertToDailyNote={handleInsertToDailyNote}
+            onViewChange={handleViewChange}
+            onTaskUpdated={() => this.plugin.refreshAllViews()}
+          />
+        </React.StrictMode>
+      );
+    }
+  }
+
   getViewType(): string {
     return VIEW_TYPE_GTD;
   }
@@ -125,6 +166,40 @@ class WeeklyReviewViewLeaf extends ItemView {
     this.taskService = new TaskService(this.fileService);
     this.projectService = new ProjectService(this.app, plugin.settings);
     this.taskService.setProjectService(this.projectService);
+  }
+
+  /**
+   * ビューを再レンダリング（言語変更時などに使用）
+   */
+  rerender(): void {
+    if (this.root) {
+      const handleViewChange = async (view: string) => {
+        if (view === 'main') {
+          await this.plugin.activateView();
+        } else if (view === 'project') {
+          await this.plugin.activateProjectView();
+        }
+      };
+
+      this.root.render(
+        <React.StrictMode>
+          <WeeklyReviewView
+            taskService={this.taskService}
+            projectService={this.projectService}
+            fileService={this.fileService}
+            settings={this.plugin.settings}
+            onRefresh={() => {
+              this.plugin.refreshActiveView();
+            }}
+            onViewChange={handleViewChange}
+            onMounted={(refreshFn) => {
+              this.refreshFn = refreshFn;
+            }}
+            onTaskUpdated={() => this.plugin.refreshAllViews()}
+          />
+        </React.StrictMode>
+      );
+    }
   }
 
   getViewType(): string {
@@ -209,6 +284,37 @@ class ProjectViewLeaf extends ItemView {
     this.taskService = new TaskService(this.fileService);
     this.projectService = new ProjectService(this.app, plugin.settings);
     this.taskService.setProjectService(this.projectService);
+  }
+
+  /**
+   * ビューを再レンダリング（言語変更時などに使用）
+   */
+  rerender(): void {
+    if (this.root) {
+      const handleViewChange = async (view: string) => {
+        if (view === 'main') {
+          await this.plugin.activateView();
+        } else if (view === 'weekly-review') {
+          await this.plugin.activateWeeklyReviewView();
+        }
+      };
+
+      this.root.render(
+        <React.StrictMode>
+          <ProjectView
+            projectService={this.projectService}
+            taskService={this.taskService}
+            fileService={this.fileService}
+            settings={this.plugin.settings}
+            onViewChange={handleViewChange}
+            onMounted={(refreshFn) => {
+              this.refreshFn = refreshFn;
+            }}
+            onTaskUpdated={() => this.plugin.refreshAllViews()}
+          />
+        </React.StrictMode>
+      );
+    }
   }
 
   getViewType(): string {
@@ -586,6 +692,43 @@ export default class GTDPlugin extends Plugin {
    */
   async loadSettings(): Promise<void> {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  /**
+   * すべてのビューを再レンダリング（言語変更時などに使用）
+   */
+  rerenderAllViews(): void {
+    console.log('[GTDPlugin] Re-rendering all views');
+
+    // GTDメインビューを再レンダリング
+    const gtdLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_GTD);
+    gtdLeaves.forEach((leaf) => {
+      const view = leaf.view;
+      if (view instanceof GTDView) {
+        console.log('[GTDPlugin] Re-rendering GTD main view');
+        view.rerender();
+      }
+    });
+
+    // 週次レビュービューを再レンダリング
+    const weeklyLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_WEEKLY_REVIEW);
+    weeklyLeaves.forEach((leaf) => {
+      const view = leaf.view;
+      if (view instanceof WeeklyReviewViewLeaf) {
+        console.log('[GTDPlugin] Re-rendering weekly review view');
+        view.rerender();
+      }
+    });
+
+    // プロジェクトビューを再レンダリング
+    const projectLeaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_PROJECT);
+    projectLeaves.forEach((leaf) => {
+      const view = leaf.view;
+      if (view instanceof ProjectViewLeaf) {
+        console.log('[GTDPlugin] Re-rendering project view');
+        view.rerender();
+      }
+    });
   }
 
   /**

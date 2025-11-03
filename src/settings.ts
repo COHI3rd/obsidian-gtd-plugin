@@ -53,6 +53,8 @@ export class GTDSettingTab extends PluginSettingTab {
           .onChange(async (value: any) => {
             this.plugin.settings.language = value;
             await this.plugin.saveSettings();
+            // すべてのビューを再レンダリング（言語変更を反映）
+            this.plugin.rerenderAllViews();
             // 設定画面を再描画
             this.display();
           })

@@ -303,10 +303,8 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
     taskService.toggleTaskComplete(taskId)
       .then(() => {
         console.log('[GTDMainView] Task completion toggled');
-        // 他のビューも更新
-        if (onTaskUpdated) {
-          onTaskUpdated();
-        }
+        // 楽観的更新を使用しているため、他のビューへの通知は不要
+        // （ちらつき防止のため onTaskUpdated() を呼ばない）
       })
       .catch(error => {
         console.error('[GTDMainView] Failed to toggle task:', error);
@@ -332,10 +330,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
     taskService.changeTaskStatus(taskId, newStatus)
       .then(() => {
         console.log('[GTDMainView] Task status changed');
-        // 他のビューも更新
-        if (onTaskUpdated) {
-          onTaskUpdated();
-        }
+        // 楽観的更新を使用しているため、他のビューへの通知は不要
       })
       .catch(error => {
         console.error('[GTDMainView] Failed to change task status:', error);
