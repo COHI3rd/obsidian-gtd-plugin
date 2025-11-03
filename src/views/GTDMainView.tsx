@@ -89,8 +89,8 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
     };
   }, []);
 
-  // タスクをソート
-  const sortTasks = (taskList: Task[]): Task[] => {
+  // タスクをソート（useCallbackでメモ化して不要な再計算を防ぐ）
+  const sortTasks = useCallback((taskList: Task[]): Task[] => {
     // 完了タスクと未完了タスクに分ける
     const completedTasks = taskList.filter(t => t.completed);
     const incompleteTasks = taskList.filter(t => !t.completed);
@@ -120,31 +120,32 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
 
     // 未完了タスクを上に、完了タスクを下に配置
     return [...incompleteTasks, ...completedTasks];
-  };
+  }, [settings.taskSortMode]);
 
-  // タスクをステータスでフィルタ（useMemoでメモ化）
+  // タスクをステータスでフィルタ（useCallbackでメモ化）
   const getTasksByStatus = useCallback((status: TaskStatus, excludeCompleted = true): Task[] => {
     const filtered = tasks.filter(
       (task) => task.status === status && (!excludeCompleted || !task.completed)
     );
     return sortTasks(filtered);
-  }, [tasks, settings.taskSortMode]);
+  }, [tasks, sortTasks]);
 
   // 今日のタスクを取得（完了済みも含める）- useMemoでメモ化
   const todayTasks = useMemo(() => {
     const todayTasks = tasks.filter((task) => task.isToday());
     return sortTasks(todayTasks);
-  }, [tasks, settings.taskSortMode]);
+  }, [tasks, sortTasks]);
 
   // 各ステータスのタスクをメモ化
-  const inboxTasks = useMemo(() => getTasksByStatus('inbox'), [tasks, settings.taskSortMode]);
-  const nextActionTasks = useMemo(() => getTasksByStatus('next-action'), [tasks, settings.taskSortMode]);
-  const waitingTasks = useMemo(() => getTasksByStatus('waiting'), [tasks, settings.taskSortMode]);
-  const somedayTasks = useMemo(() => getTasksByStatus('someday'), [tasks, settings.taskSortMode]);
+  const inboxTasks = useMemo(() => getTasksByStatus('inbox'), [getTasksByStatus]);
+  const nextActionTasks = useMemo(() => getTasksByStatus('next-action'), [getTasksByStatus]);
+  const waitingTasks = useMemo(() => getTasksByStatus('waiting'), [getTasksByStatus]);
+  const somedayTasks = useMemo(() => getTasksByStatus('someday'), [getTasksByStatus]);
 
-  // タスク読み込み後に空のグループを閉じる
+  // タスク読み込み後に空のグループを閉じる（初回ロード時のみ実行）
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   useEffect(() => {
-    if (!loading && tasks.length > 0) {
+    if (!loading && tasks.length > 0 && isInitialLoad) {
       setCollapsedGroups({
         today: todayTasks.length === 0,
         inbox: inboxTasks.length === 0,
@@ -152,8 +153,9 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         waiting: waitingTasks.length === 0,
         someday: somedayTasks.length === 0,
       });
+      setIsInitialLoad(false); // 初回ロード完了
     }
-  }, [loading, todayTasks, inboxTasks, nextActionTasks, waitingTasks, somedayTasks]);
+  }, [loading, tasks.length, isInitialLoad, todayTasks.length, inboxTasks.length, nextActionTasks.length, waitingTasks.length, somedayTasks.length]);
 
   // グループの開閉をトグル
   const toggleGroup = (groupId: string) => {
