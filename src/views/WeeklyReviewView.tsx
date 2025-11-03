@@ -6,6 +6,7 @@ import { ViewSwitcher, ViewType } from '../components/ViewSwitcher';
 import { TaskService } from '../services/TaskService';
 import { ProjectService } from '../services/ProjectService';
 import { FileService } from '../services/FileService';
+import { getText } from '../i18n';
 
 interface WeeklyReviewViewProps {
   taskService: TaskService;
@@ -35,6 +36,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
   onMounted,
   onTaskUpdated
 }) => {
+  const t = getText(settings.language);
   const [somedayTasks, setSomedayTasks] = useState<Task[]>([]);
   const [waitingTasks, setWaitingTasks] = useState<Task[]>([]);
   const [activeProjects, setActiveProjects] = useState<Project[]>([]);
@@ -173,7 +175,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
   if (loading) {
     return (
       <div className="gtd-weekly-review">
-        <div className="gtd-weekly-review__loading">読み込み中...</div>
+        <div className="gtd-weekly-review__loading">{t.loading}</div>
       </div>
     );
   }
@@ -189,17 +191,18 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
                 onViewChange(view);
               }
             }}
+            settings={settings}
           />
           <button
             className="gtd-button gtd-button--icon"
             onClick={loadData}
-            title="ビューを更新"
+            title={t.refresh}
           >
             🔄
           </button>
         </div>
         <p className="gtd-weekly-review__subtitle">
-          各リストを見直し、次の一週間の準備をしましょう
+          {t.weeklyReviewSubtitle}
         </p>
       </div>
 
@@ -209,25 +212,25 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
           className={`gtd-tab ${selectedSection === 'completed' ? 'gtd-tab--active' : ''}`}
           onClick={() => setSelectedSection('completed')}
         >
-          ✅ 今週完了 ({completedThisWeek.length})
+          {t.completedThisWeekTab} ({completedThisWeek.length})
         </button>
         <button
           className={`gtd-tab ${selectedSection === 'someday' ? 'gtd-tab--active' : ''}`}
           onClick={() => setSelectedSection('someday')}
         >
-          🌟 いつかやる/多分やる ({somedayTasks.length})
+          {t.somedayTab} ({somedayTasks.length})
         </button>
         <button
           className={`gtd-tab ${selectedSection === 'waiting' ? 'gtd-tab--active' : ''}`}
           onClick={() => setSelectedSection('waiting')}
         >
-          ⏳ 連絡待ち ({waitingTasks.length})
+          {t.waitingTab} ({waitingTasks.length})
         </button>
         <button
           className={`gtd-tab ${selectedSection === 'projects' ? 'gtd-tab--active' : ''}`}
           onClick={() => setSelectedSection('projects')}
         >
-          🎯 進行中プロジェクト ({activeProjects.length})
+          {t.activeProjectsTab} ({activeProjects.length})
         </button>
       </div>
 
@@ -235,15 +238,15 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       {selectedSection === 'completed' && (
         <div className="gtd-weekly-review__section">
           <div className="gtd-weekly-review__section-header">
-            <h3>✅ 今週完了したタスク</h3>
+            <h3>{t.completedThisWeekTitle}</h3>
             <p className="gtd-weekly-review__hint">
-              今週完了したタスクを振り返りましょう
+              {t.completedThisWeekHint}
             </p>
           </div>
 
           {completedThisWeek.length === 0 ? (
             <div className="gtd-weekly-review__empty">
-              <p>今週完了したタスクはありません</p>
+              <p>{t.emptyCompleted}</p>
             </div>
           ) : (
             <div className="gtd-weekly-review__tasks">
@@ -292,15 +295,15 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       {selectedSection === 'someday' && (
         <div className="gtd-weekly-review__section">
           <div className="gtd-weekly-review__section-header">
-            <h3>🌟 いつかやる/多分やる</h3>
+            <h3>{t.somedayTitle}</h3>
             <p className="gtd-weekly-review__hint">
-              これらのタスクを見直し、今週実行するものがあれば「次に取るべき行動」に移動しましょう
+              {t.somedayHint}
             </p>
           </div>
 
           {somedayTasks.length === 0 ? (
             <div className="gtd-weekly-review__empty">
-              <p>🎉 いつかやる/多分やるリストは空です</p>
+              <p>{t.emptySomeday}</p>
             </div>
           ) : (
             <div className="gtd-weekly-review__tasks">
@@ -321,23 +324,23 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
                     <button
                       className="gtd-button gtd-button--small gtd-button--primary"
                       onClick={() => moveToNextAction(task)}
-                      title="次に取るべき行動に移動"
+                      title={t.moveToNextAction}
                     >
-                      ➡️ Next Action
+                      {t.moveToNextAction}
                     </button>
                     <button
                       className="gtd-button gtd-button--small"
                       onClick={() => moveToToday(task)}
-                      title="Todayに移動"
+                      title={t.moveToToday}
                     >
-                      📅 Today
+                      {t.moveToToday}
                     </button>
                     <button
                       className="gtd-button gtd-button--small gtd-button--danger"
                       onClick={() => archiveTask(task)}
-                      title="アーカイブ（削除）"
+                      title={t.archive}
                     >
-                      🗑️ Archive
+                      {t.archive}
                     </button>
                   </div>
                 </div>
@@ -351,15 +354,15 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       {selectedSection === 'waiting' && (
         <div className="gtd-weekly-review__section">
           <div className="gtd-weekly-review__section-header">
-            <h3>⏳ 連絡待ち</h3>
+            <h3>{t.waitingTitle}</h3>
             <p className="gtd-weekly-review__hint">
-              返答があったタスクは「次に取るべき行動」に移動し、不要になったものはアーカイブしましょう
+              {t.waitingHint}
             </p>
           </div>
 
           {waitingTasks.length === 0 ? (
             <div className="gtd-weekly-review__empty">
-              <p>🎉 連絡待ちリストは空です</p>
+              <p>{t.emptyWaiting}</p>
             </div>
           ) : (
             <div className="gtd-weekly-review__tasks">
@@ -380,23 +383,23 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
                     <button
                       className="gtd-button gtd-button--small gtd-button--primary"
                       onClick={() => moveToNextAction(task)}
-                      title="次に取るべき行動に移動"
+                      title={t.moveToNextAction}
                     >
-                      ➡️ Next Action
+                      {t.moveToNextAction}
                     </button>
                     <button
                       className="gtd-button gtd-button--small"
                       onClick={() => moveToInbox(task)}
-                      title="Inboxに戻す"
+                      title={t.moveToInbox}
                     >
-                      📥 Inbox
+                      {t.moveToInbox}
                     </button>
                     <button
                       className="gtd-button gtd-button--small gtd-button--danger"
                       onClick={() => archiveTask(task)}
-                      title="アーカイブ（削除）"
+                      title={t.archive}
                     >
-                      🗑️ Archive
+                      {t.archive}
                     </button>
                   </div>
                 </div>
@@ -410,15 +413,15 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       {selectedSection === 'projects' && (
         <div className="gtd-weekly-review__section">
           <div className="gtd-weekly-review__section-header">
-            <h3>🎯 進行中プロジェクト</h3>
+            <h3>{t.activeProjectsTitle}</h3>
             <p className="gtd-weekly-review__hint">
-              各プロジェクトの進捗を確認し、次に取るべきアクションを明確にしましょう
+              {t.activeProjectsHint}
             </p>
           </div>
 
           {activeProjects.length === 0 ? (
             <div className="gtd-weekly-review__empty">
-              <p>📝 進行中のプロジェクトはありません</p>
+              <p>{t.emptyActiveProjects}</p>
             </div>
           ) : (
             <div className="gtd-weekly-review__projects">
@@ -453,13 +456,13 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
 
       {/* 週次レビューのヒント */}
       <div className="gtd-weekly-review__tips">
-        <h4>💡 週次レビューのポイント</h4>
+        <h4>{t.reviewTips}</h4>
         <ul>
-          <li>すべての「いつかやる/多分やる」リストを見直し、今週実行すべきものを「次に取るべき行動」に移動</li>
-          <li>「連絡待ち」リストを確認し、返答があったものは行動に移す</li>
-          <li>進行中のプロジェクトを見直し、次のアクションが明確か確認</li>
-          <li>Inboxが空になっていることを確認</li>
-          <li>来週の目標を設定し、Todayリストを準備</li>
+          <li>{t.reviewTip1}</li>
+          <li>{t.reviewTip2}</li>
+          <li>{t.reviewTip3}</li>
+          <li>{t.reviewTip4}</li>
+          <li>{t.reviewTip5}</li>
         </ul>
       </div>
     </div>

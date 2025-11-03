@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { TaskStatus, TaskPriority, Project } from '../types';
+import { TaskStatus, TaskPriority, Project, GTDSettings } from '../types';
+import { getText } from '../i18n';
 
 interface QuickAddModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (title: string, status: TaskStatus, priority: TaskPriority, project?: string) => void;
   projects?: Project[];
+  settings: GTDSettings;
 }
 
 /**
@@ -17,7 +19,9 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
   onClose,
   onSubmit,
   projects = [],
+  settings,
 }) => {
+  const t = getText(settings.language);
   const [title, setTitle] = useState('');
   const [status, setStatus] = useState<TaskStatus>('inbox');
   const [priority, setPriority] = useState<TaskPriority>('medium');
@@ -59,7 +63,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
         onKeyDown={handleKeyDown}
       >
         <div className="gtd-modal-header">
-          <h2>タスクを追加</h2>
+          <h2>{t.addTaskTitle}</h2>
           <button className="gtd-modal-close" onClick={onClose}>
             ×
           </button>
@@ -68,14 +72,14 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
         <form onSubmit={handleSubmit} className="gtd-modal-form">
           {/* タイトル入力 */}
           <div className="gtd-form-group">
-            <label htmlFor="task-title">タスク名 *</label>
+            <label htmlFor="task-title">{t.taskName} {t.required}</label>
             <input
               ref={inputRef}
               id="task-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="タスクの内容を入力..."
+              placeholder={t.taskNamePlaceholder}
               className="gtd-input"
               required
             />
@@ -83,46 +87,46 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
 
           {/* ステータス選択 */}
           <div className="gtd-form-group">
-            <label htmlFor="task-status">ステータス</label>
+            <label htmlFor="task-status">{t.status}</label>
             <select
               id="task-status"
               value={status}
               onChange={(e) => setStatus(e.target.value as TaskStatus)}
               className="gtd-select"
             >
-              <option value="inbox">📥 Inbox</option>
-              <option value="next-action">▶️ 次に取るべき行動</option>
-              <option value="today">📅 今日</option>
-              <option value="waiting">⏳ 連絡待ち</option>
-              <option value="someday">💭 いつかやる/多分やる</option>
+              <option value="inbox">{t.inbox}</option>
+              <option value="next-action">{t.nextAction}</option>
+              <option value="today">{t.today}</option>
+              <option value="waiting">{t.waiting}</option>
+              <option value="someday">{t.someday}</option>
             </select>
           </div>
 
           {/* 優先度選択 */}
           <div className="gtd-form-group">
-            <label htmlFor="task-priority">優先度</label>
+            <label htmlFor="task-priority">{t.priority}</label>
             <select
               id="task-priority"
               value={priority}
               onChange={(e) => setPriority(e.target.value as TaskPriority)}
               className="gtd-select"
             >
-              <option value="low">低</option>
-              <option value="medium">中</option>
-              <option value="high">高</option>
+              <option value="low">{t.priorityLow}</option>
+              <option value="medium">{t.priorityMedium}</option>
+              <option value="high">{t.priorityHigh}</option>
             </select>
           </div>
 
           {/* プロジェクト選択 */}
           <div className="gtd-form-group">
-            <label htmlFor="task-project">プロジェクト</label>
+            <label htmlFor="task-project">{t.project}</label>
             <select
               id="task-project"
               value={project}
               onChange={(e) => setProject(e.target.value)}
               className="gtd-select"
             >
-              <option value="">なし</option>
+              <option value="">{t.none}</option>
               {projects.map((p) => (
                 <option key={p.id} value={`[[${p.title}]]`}>
                   {p.title}
@@ -134,10 +138,10 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
           {/* ボタン */}
           <div className="gtd-modal-actions">
             <button type="button" onClick={onClose} className="gtd-button gtd-button--secondary">
-              キャンセル
+              {t.cancel}
             </button>
             <button type="submit" className="gtd-button gtd-button--primary">
-              追加
+              {t.add}
             </button>
           </div>
         </form>

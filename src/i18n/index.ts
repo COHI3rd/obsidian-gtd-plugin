@@ -98,6 +98,63 @@ export interface I18nTexts {
   usageStep2: string;
   usageStep3: string;
   usageStep4: string;
+
+  // プロジェクトビュー
+  addProject: string;
+  allProjects: string;
+  filter: string;
+  sortBy: string;
+  sortByImportance: string;
+  sortByDeadline: string;
+  sortByProgress: string;
+  emptyProjectMessage: string;
+  emptyProjectFiltered: string;
+
+  // 週次レビュー
+  weeklyReviewSubtitle: string;
+  completedThisWeekTab: string;
+  somedayTab: string;
+  waitingTab: string;
+  activeProjectsTab: string;
+  completedThisWeekTitle: string;
+  completedThisWeekHint: string;
+  somedayTitle: string;
+  somedayHint: string;
+  waitingTitle: string;
+  waitingHint: string;
+  activeProjectsTitle: string;
+  activeProjectsHint: string;
+  reviewTips: string;
+  reviewTip1: string;
+  reviewTip2: string;
+  reviewTip3: string;
+  reviewTip4: string;
+  reviewTip5: string;
+  moveToNextAction: string;
+  moveToToday: string;
+  archive: string;
+  moveToInbox: string;
+  emptyCompleted: string;
+  emptySomeday: string;
+  emptyWaiting: string;
+  emptyActiveProjects: string;
+
+  // モーダル
+  addTaskTitle: string;
+  taskName: string;
+  taskNamePlaceholder: string;
+  required: string;
+  none: string;
+  add: string;
+  createProjectTitle: string;
+  projectName: string;
+  projectNamePlaceholder: string;
+  create: string;
+
+  // ビュー切り替え
+  gtdTasksTooltip: string;
+  projectListTooltip: string;
+  weeklyReviewTooltip: string;
 }
 
 export const texts: Record<Language, I18nTexts> = {
@@ -195,6 +252,63 @@ export const texts: Record<Language, I18nTexts> = {
     usageStep2: '2. Inboxに思いついたタスクを追加',
     usageStep3: '3. タスクをドラッグ&ドロップで「次に取るべき行動」または「Today」に移動',
     usageStep4: '4. Todayのタスクを実行してチェックボックスをオン',
+
+    // プロジェクトビュー
+    addProject: '+ プロジェクトを追加',
+    allProjects: 'すべて',
+    filter: 'フィルター:',
+    sortBy: '並び替え:',
+    sortByImportance: '重要度順',
+    sortByDeadline: '期限順',
+    sortByProgress: '進捗率順',
+    emptyProjectMessage: '📝 プロジェクトがありません。「新規プロジェクト」ボタンから作成しましょう。',
+    emptyProjectFiltered: 'のプロジェクトはありません。',
+
+    // 週次レビュー
+    weeklyReviewSubtitle: '各リストを見直し、次の一週間の準備をしましょう',
+    completedThisWeekTab: '✅ 今週完了',
+    somedayTab: '🌟 いつかやる/多分やる',
+    waitingTab: '⏳ 連絡待ち',
+    activeProjectsTab: '🎯 進行中プロジェクト',
+    completedThisWeekTitle: '✅ 今週完了したタスク',
+    completedThisWeekHint: '今週完了したタスクを振り返りましょう',
+    somedayTitle: '🌟 いつかやる/多分やる',
+    somedayHint: 'これらのタスクを見直し、今週実行するものがあれば「次に取るべき行動」に移動しましょう',
+    waitingTitle: '⏳ 連絡待ち',
+    waitingHint: '返答があったタスクは「次に取るべき行動」に移動し、不要になったものはアーカイブしましょう',
+    activeProjectsTitle: '🎯 進行中プロジェクト',
+    activeProjectsHint: '各プロジェクトの進捗を確認し、次に取るべきアクションを明確にしましょう',
+    reviewTips: '💡 週次レビューのポイント',
+    reviewTip1: 'すべての「いつかやる/多分やる」リストを見直し、今週実行すべきものを「次に取るべき行動」に移動',
+    reviewTip2: '「連絡待ち」リストを確認し、返答があったものは行動に移す',
+    reviewTip3: '進行中のプロジェクトを見直し、次のアクションが明確か確認',
+    reviewTip4: 'Inboxが空になっていることを確認',
+    reviewTip5: '来週の目標を設定し、Todayリストを準備',
+    moveToNextAction: '➡️ Next Action',
+    moveToToday: '📅 Today',
+    archive: '🗑️ Archive',
+    moveToInbox: '📥 Inbox',
+    emptyCompleted: '今週完了したタスクはありません',
+    emptySomeday: '🎉 いつかやる/多分やるリストは空です',
+    emptyWaiting: '🎉 連絡待ちリストは空です',
+    emptyActiveProjects: '📝 進行中のプロジェクトはありません',
+
+    // モーダル
+    addTaskTitle: 'タスクを追加',
+    taskName: 'タスク名',
+    taskNamePlaceholder: 'タスクの内容を入力...',
+    required: '*',
+    none: 'なし',
+    add: '追加',
+    createProjectTitle: '新規プロジェクトを作成',
+    projectName: 'プロジェクト名',
+    projectNamePlaceholder: 'プロジェクト名を入力...',
+    create: '作成',
+
+    // ビュー切り替え
+    gtdTasksTooltip: 'GTDタスク',
+    projectListTooltip: 'プロジェクト一覧',
+    weeklyReviewTooltip: '週次レビュー',
   },
 
   en: {
@@ -291,6 +405,63 @@ export const texts: Record<Language, I18nTexts> = {
     usageStep2: '2. Add tasks to Inbox as you think of them',
     usageStep3: '3. Drag & drop tasks to "Next Actions" or "Today"',
     usageStep4: '4. Complete tasks in Today and check them off',
+
+    // Project View
+    addProject: '+ Add Project',
+    allProjects: 'All',
+    filter: 'Filter:',
+    sortBy: 'Sort by:',
+    sortByImportance: 'By Importance',
+    sortByDeadline: 'By Deadline',
+    sortByProgress: 'By Progress',
+    emptyProjectMessage: '📝 No projects. Create one using the "New Project" button.',
+    emptyProjectFiltered: 'projects found.',
+
+    // Weekly Review
+    weeklyReviewSubtitle: 'Review your lists and prepare for the upcoming week',
+    completedThisWeekTab: '✅ Completed',
+    somedayTab: '🌟 Someday/Maybe',
+    waitingTab: '⏳ Waiting For',
+    activeProjectsTab: '🎯 Active Projects',
+    completedThisWeekTitle: '✅ Completed This Week',
+    completedThisWeekHint: 'Review your accomplishments from this week',
+    somedayTitle: '🌟 Someday/Maybe',
+    somedayHint: 'Review these tasks and move actionable ones to "Next Actions"',
+    waitingTitle: '⏳ Waiting For',
+    waitingHint: 'Move tasks with responses to "Next Actions", archive what\'s no longer needed',
+    activeProjectsTitle: '🎯 Active Projects',
+    activeProjectsHint: 'Review project progress and clarify next actions',
+    reviewTips: '💡 Weekly Review Tips',
+    reviewTip1: 'Review all "Someday/Maybe" items and move actionable ones to "Next Actions"',
+    reviewTip2: 'Check "Waiting For" list and act on items with responses',
+    reviewTip3: 'Review active projects and ensure next actions are clear',
+    reviewTip4: 'Confirm Inbox is empty',
+    reviewTip5: 'Set goals for next week and prepare Today list',
+    moveToNextAction: '➡️ Next Action',
+    moveToToday: '📅 Today',
+    archive: '🗑️ Archive',
+    moveToInbox: '📥 Inbox',
+    emptyCompleted: 'No tasks completed this week',
+    emptySomeday: '🎉 Someday/Maybe list is empty',
+    emptyWaiting: '🎉 Waiting For list is empty',
+    emptyActiveProjects: '📝 No active projects',
+
+    // Modals
+    addTaskTitle: 'Add Task',
+    taskName: 'Task Name',
+    taskNamePlaceholder: 'Enter task details...',
+    required: '*',
+    none: 'None',
+    add: 'Add',
+    createProjectTitle: 'Create New Project',
+    projectName: 'Project Name',
+    projectNamePlaceholder: 'Enter project name...',
+    create: 'Create',
+
+    // View Switcher
+    gtdTasksTooltip: 'GTD Tasks',
+    projectListTooltip: 'Project List',
+    weeklyReviewTooltip: 'Weekly Review',
   },
 };
 

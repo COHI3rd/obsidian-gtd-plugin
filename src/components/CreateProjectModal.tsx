@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { GTDSettings } from '../types';
+import { getText } from '../i18n';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (title: string) => void;
+  settings: GTDSettings;
 }
 
 /**
@@ -13,7 +16,9 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
+  settings,
 }) => {
+  const t = getText(settings.language);
   const [title, setTitle] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -49,7 +54,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         onKeyDown={handleKeyDown}
       >
         <div className="gtd-modal-header">
-          <h2>新規プロジェクトを作成</h2>
+          <h2>{t.createProjectTitle}</h2>
           <button className="gtd-modal-close" onClick={onClose}>
             ×
           </button>
@@ -57,14 +62,14 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
         <form onSubmit={handleSubmit} className="gtd-modal-form">
           <div className="gtd-form-group">
-            <label htmlFor="project-title">プロジェクト名 *</label>
+            <label htmlFor="project-title">{t.projectName} {t.required}</label>
             <input
               ref={inputRef}
               id="project-title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="プロジェクト名を入力..."
+              placeholder={t.projectNamePlaceholder}
               className="gtd-input"
               required
             />
@@ -72,10 +77,10 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
 
           <div className="gtd-modal-actions">
             <button type="button" onClick={onClose} className="gtd-button gtd-button--secondary">
-              キャンセル
+              {t.cancel}
             </button>
             <button type="submit" className="gtd-button gtd-button--primary">
-              作成
+              {t.create}
             </button>
           </div>
         </form>

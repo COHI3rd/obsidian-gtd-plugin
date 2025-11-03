@@ -7,6 +7,7 @@ import { ProjectService } from '../services/ProjectService';
 import { TaskService } from '../services/TaskService';
 import { FileService } from '../services/FileService';
 import { ProjectCalculator } from '../utils/ProjectCalculator';
+import { getText } from '../i18n';
 
 interface ProjectViewProps {
   projectService: ProjectService;
@@ -31,6 +32,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
   onMounted,
   onTaskUpdated
 }) => {
+  const t = getText(settings.language);
   const [projects, setProjects] = useState<Project[]>([]);
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,7 +186,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
   if (loading) {
     return (
       <div className="gtd-project-view">
-        <div className="gtd-project-view__loading">読み込み中...</div>
+        <div className="gtd-project-view__loading">{t.loading}</div>
       </div>
     );
   }
@@ -201,11 +203,12 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                 onViewChange(view);
               }
             }}
+            settings={settings}
           />
           <button
             className="gtd-button gtd-button--icon"
             onClick={loadData}
-            title="ビューを更新"
+            title={t.refresh}
           >
             🔄
           </button>
@@ -215,7 +218,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
             className="gtd-button gtd-button--primary"
             onClick={handleCreateProjectClick}
           >
-            + プロジェクトを追加
+            {t.addProject}
           </button>
         </div>
       </div>
@@ -223,11 +226,11 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
       {/* 統計 */}
       <div className="gtd-project-view__stats">
         <div className="gtd-stat-card gtd-stat-card--warning">
-          <span className="gtd-stat-card__label">未開始:</span>
+          <span className="gtd-stat-card__label">{t.notStarted}:</span>
           <span className="gtd-stat-card__value">{stats.notStarted}</span>
         </div>
         <div className="gtd-stat-card gtd-stat-card--info">
-          <span className="gtd-stat-card__label">進行中:</span>
+          <span className="gtd-stat-card__label">{t.inProgress}:</span>
           <span className="gtd-stat-card__value">{stats.inProgress}</span>
         </div>
       </div>
@@ -235,29 +238,29 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
       {/* フィルターとソート */}
       <div className="gtd-project-view__controls">
         <div className="gtd-filter-group">
-          <label>フィルター:</label>
+          <label>{t.filter}</label>
           <select
             className="gtd-select gtd-select--small"
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as ProjectStatus | 'all')}
           >
-            <option value="all">すべて</option>
-            <option value="not-started">未開始</option>
-            <option value="in-progress">進行中</option>
-            <option value="completed">完了</option>
+            <option value="all">{t.allProjects}</option>
+            <option value="not-started">{t.notStarted}</option>
+            <option value="in-progress">{t.inProgress}</option>
+            <option value="completed">{t.completed}</option>
           </select>
         </div>
 
         <div className="gtd-filter-group">
-          <label>並び替え:</label>
+          <label>{t.sortBy}</label>
           <select
             className="gtd-select gtd-select--small"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'deadline' | 'importance' | 'progress')}
           >
-            <option value="importance">重要度順</option>
-            <option value="deadline">期限順</option>
-            <option value="progress">進捗率順</option>
+            <option value="importance">{t.sortByImportance}</option>
+            <option value="deadline">{t.sortByDeadline}</option>
+            <option value="progress">{t.sortByProgress}</option>
           </select>
         </div>
       </div>
@@ -267,8 +270,8 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
         <div className="gtd-project-view__empty">
           <p>
             {filterStatus === 'all'
-              ? '📝 プロジェクトがありません。「新規プロジェクト」ボタンから作成しましょう。'
-              : `🔍 ${filterStatus === 'not-started' ? '未開始' : filterStatus === 'in-progress' ? '進行中' : '完了'}のプロジェクトはありません。`}
+              ? t.emptyProjectMessage
+              : `🔍 ${filterStatus === 'not-started' ? t.notStarted : filterStatus === 'in-progress' ? t.inProgress : t.completed}${t.emptyProjectFiltered}`}
           </p>
         </div>
       ) : (
@@ -303,6 +306,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateProject}
+        settings={settings}
       />
     </div>
   );

@@ -409,6 +409,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
           <div className="gtd-main-view__header-top">
             <ViewSwitcher
               currentView="main"
+              settings={settings}
               onViewChange={(view) => {
                 if (onViewChange) {
                   onViewChange(view);
@@ -756,6 +757,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
           onClose={() => setIsModalOpen(false)}
           onSubmit={handleQuickAdd}
           projects={projects}
+          settings={settings}
         />
       </div>
     </DragDropContext>
