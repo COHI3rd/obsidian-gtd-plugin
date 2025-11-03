@@ -59,6 +59,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   min-height: 0;
+  height: 100%;
 }
 
 /* タブ */
@@ -94,6 +95,10 @@
 /* セクション */
 .gtd-section {
   margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
 }
 
 .gtd-section__title {
@@ -137,6 +142,9 @@
 .gtd-section-wrapper {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .gtd-section-wrapper--collapsed {
@@ -187,14 +195,14 @@
 }
 
 .gtd-task-card--dragging {
-  opacity: 0.95;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  transform: rotate(3deg) scale(1.02) !important;
+  opacity: 0.95 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
   cursor: grabbing !important;
-  background: var(--background-secondary);
-  border: 2px solid var(--interactive-accent);
+  background: var(--background-secondary) !important;
+  border: 2px solid var(--interactive-accent) !important;
   z-index: 9999 !important;
-  position: relative !important;
+  transform-origin: center center !important;
+  will-change: transform !important;
 }
 
 /* ドラッグ中の元の位置に表示されるプレースホルダー */
