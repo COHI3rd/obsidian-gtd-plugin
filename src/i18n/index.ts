@@ -166,6 +166,20 @@ export interface I18nTexts {
   createReviewError: string;
   reviewAlreadyExists: string;
   reviewCreatedAndOpened: string;
+
+  // 週次レビューファイル内容
+  reviewPeriodLabel: string;
+  reviewAchievementsTitle: string;
+  reviewCompletedTasks: string;
+  reviewActiveProjects: string;
+  reviewReflectionsTitle: string;
+  reviewReflectionsPlaceholder: string;
+  reviewLearningsTitle: string;
+  reviewLearningsPlaceholder: string;
+  reviewNextWeekGoalsTitle: string;
+  reviewNextWeekGoalsPlaceholder: string;
+  reviewNotesTitle: string;
+  reviewNotesPlaceholder: string;
 }
 
 export const texts: Record<Language, I18nTexts> = {
@@ -331,6 +345,20 @@ export const texts: Record<Language, I18nTexts> = {
     createReviewError: '❌ レビューの作成に失敗しました',
     reviewAlreadyExists: '⚠️ 今週のレビューは既に作成されています',
     reviewCreatedAndOpened: '📝 レビューファイルを作成しました。左側のエディタで編集できます。',
+
+    // 週次レビューファイル内容
+    reviewPeriodLabel: '期間',
+    reviewAchievementsTitle: '📊 今週の成果',
+    reviewCompletedTasks: '完了タスク',
+    reviewActiveProjects: '進行中プロジェクト',
+    reviewReflectionsTitle: '💭 振り返り',
+    reviewReflectionsPlaceholder: '_今週の振り返りを記入してください_',
+    reviewLearningsTitle: '📚 学んだこと',
+    reviewLearningsPlaceholder: '_今週学んだことを記入してください_',
+    reviewNextWeekGoalsTitle: '🎯 来週の目標',
+    reviewNextWeekGoalsPlaceholder: '_来週の目標を記入してください_',
+    reviewNotesTitle: '📝 その他メモ',
+    reviewNotesPlaceholder: '_その他のメモがあれば記入してください_',
   },
 
   en: {
@@ -495,6 +523,20 @@ export const texts: Record<Language, I18nTexts> = {
     createReviewError: '❌ Failed to create review',
     reviewAlreadyExists: '⚠️ This week\'s review already exists',
     reviewCreatedAndOpened: '📝 Review file created. You can edit it in the left editor.',
+
+    // Weekly Review File Content
+    reviewPeriodLabel: 'Period',
+    reviewAchievementsTitle: '📊 This Week\'s Achievements',
+    reviewCompletedTasks: 'Completed Tasks',
+    reviewActiveProjects: 'Active Projects',
+    reviewReflectionsTitle: '💭 Reflections',
+    reviewReflectionsPlaceholder: '_Write your reflections for this week_',
+    reviewLearningsTitle: '📚 Learnings',
+    reviewLearningsPlaceholder: '_What did you learn this week?_',
+    reviewNextWeekGoalsTitle: '🎯 Next Week\'s Goals',
+    reviewNextWeekGoalsPlaceholder: '_Set your goals for next week_',
+    reviewNotesTitle: '📝 Additional Notes',
+    reviewNotesPlaceholder: '_Add any additional notes here_',
   },
 };
 

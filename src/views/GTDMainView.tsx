@@ -58,11 +58,13 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
     }
   };
 
-  // プロジェクト一覧を読み込み
+  // プロジェクト一覧を読み込み（完了していないプロジェクトのみ）
   const loadProjects = async () => {
     try {
       const allProjects = await projectService.getAllProjects();
-      setProjects(allProjects);
+      // 完了していないプロジェクトのみをフィルタリング
+      const activeProjects = allProjects.filter(p => p.status !== 'completed');
+      setProjects(activeProjects);
     } catch (error) {
       console.error('Failed to load projects:', error);
     }

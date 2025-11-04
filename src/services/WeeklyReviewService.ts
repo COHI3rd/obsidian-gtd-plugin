@@ -1,6 +1,7 @@
 import { App, TFile, TFolder } from 'obsidian';
 import { WeeklyReview } from '../models/WeeklyReview';
-import { WeeklyReviewFrontmatter, WeekStartDay } from '../types';
+import { WeeklyReviewFrontmatter, WeekStartDay, Language } from '../types';
+import { getText } from '../i18n';
 import * as yaml from 'js-yaml';
 
 /**
@@ -11,19 +12,22 @@ export class WeeklyReviewService {
   private app: App;
   private reviewFolder: string;
   private weekStartDay: WeekStartDay;
+  private language: Language;
 
-  constructor(app: App, reviewFolder: string, weekStartDay: WeekStartDay = 'monday') {
+  constructor(app: App, reviewFolder: string, weekStartDay: WeekStartDay = 'monday', language: Language = 'ja') {
     this.app = app;
     this.reviewFolder = reviewFolder;
     this.weekStartDay = weekStartDay;
+    this.language = language;
   }
 
   /**
    * 設定を更新
    */
-  updateSettings(reviewFolder: string, weekStartDay: WeekStartDay): void {
+  updateSettings(reviewFolder: string, weekStartDay: WeekStartDay, language: Language): void {
     this.reviewFolder = reviewFolder;
     this.weekStartDay = weekStartDay;
+    this.language = language;
   }
 
   /**
@@ -132,6 +136,7 @@ export class WeeklyReviewService {
    * レビューコンテンツを生成
    */
   private generateReviewContent(review: WeeklyReview): string {
+    const t = getText(this.language);
     const frontmatter: WeeklyReviewFrontmatter = {
       type: 'weekly-review',
       date: this.formatDate(review.date),
@@ -140,34 +145,38 @@ export class WeeklyReviewService {
 
     const frontmatterStr = yaml.dump(frontmatter, { lineWidth: -1 });
 
+    const countUnit = this.language === 'ja' ? '件' : '';
+    const completedTasksText = `${review.completedTasksCount}${countUnit}`;
+    const activeProjectsText = `${review.activeProjectsCount}${countUnit}`;
+
     return `---
 ${frontmatterStr.trim()}
 ---
 
 # ${review.getTitle()}
 
-**期間**: ${review.getWeekRange()}
+**${t.reviewPeriodLabel}**: ${review.getWeekRange()}
 
-## 📊 今週の成果
+## ${t.reviewAchievementsTitle}
 
-- **完了タスク**: ${review.completedTasksCount}件
-- **進行中プロジェクト**: ${review.activeProjectsCount}件
+- **${t.reviewCompletedTasks}**: ${completedTasksText}
+- **${t.reviewActiveProjects}**: ${activeProjectsText}
 
-## 💭 振り返り
+## ${t.reviewReflectionsTitle}
 
-${review.reflections || '_今週の振り返りを記入してください_'}
+${review.reflections || t.reviewReflectionsPlaceholder}
 
-## 📚 学んだこと
+## ${t.reviewLearningsTitle}
 
-${review.learnings || '_今週学んだことを記入してください_'}
+${review.learnings || t.reviewLearningsPlaceholder}
 
-## 🎯 来週の目標
+## ${t.reviewNextWeekGoalsTitle}
 
-${review.nextWeekGoals || '_来週の目標を記入してください_'}
+${review.nextWeekGoals || t.reviewNextWeekGoalsPlaceholder}
 
-## 📝 その他メモ
+## ${t.reviewNotesTitle}
 
-${review.notes || '_その他のメモがあれば記入してください_'}
+${review.notes || t.reviewNotesPlaceholder}
 `;
   }
 
