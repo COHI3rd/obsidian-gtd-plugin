@@ -72,8 +72,8 @@ export class GTDSettingTab extends PluginSettingTab {
             sunday: t.weekStartDaySunday,
           })
           .setValue(this.plugin.settings.weekStartDay)
-          .onChange(async (value: any) => {
-            this.plugin.settings.weekStartDay = value;
+          .onChange(async (value: string) => {
+            this.plugin.settings.weekStartDay = value as 'monday' | 'sunday';
             await this.plugin.saveSettings();
           })
       );
