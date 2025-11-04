@@ -6,6 +6,7 @@ A powerful GTD (Getting Things Done) task management plugin for Obsidian featuri
 
 ## ✨ Features
 
+### Core GTD Features
 - 📥 **Inbox System** - Capture ideas instantly
 - 🎯 **Complete GTD Workflow** - Seamless Inbox → Next Actions → Today flow
 - 🖱️ **Drag & Drop Interface** - Intuitive task movement and manual sorting
@@ -13,17 +14,33 @@ A powerful GTD (Getting Things Done) task management plugin for Obsidian featuri
 - 🔄 **Smart Date Updates** - Yesterday's uncompleted tasks auto-update to today
 - 🕛 **Auto Date Change Detection** - Automatically refresh all views when date changes (checks every 60 seconds)
 - ✅ **Automatic Task Organization** - Completed tasks always appear at bottom
-- 📊 **Project Management** - Auto-calculate progress with backlink support
-- 📂 **Project Card Expansion** - Click to expand/collapse task lists (default: collapsed)
-- 📝 **Daily Note Integration** - Auto-collect completed tasks with Dataview
+- 🗑️ **Trash Bin** - Drag & drop tasks to delete (moved to trash folder)
 - 🔽 **Collapsible Groups** - Fold sections to reduce clutter
 - 👆 **Drop to Collapsed Groups** - Drag tasks to closed groups via title
+- 🖱️ **Right-Click Context Menu** - Quick status changes via context menu
+
+### Project & Review Management
+- 📊 **Project Management** - Auto-calculate progress with backlink support
+  - 📁 Completed projects organized monthly (`完了/YYYY-MM/`)
+  - 🎯 Only active projects shown in task creation dropdown
+- 📂 **Project Card Expansion** - Click to expand/collapse task lists (default: collapsed)
+- 📋 **Weekly Review View** - Complete GTD weekly review support
+  - 🔄 Auto-Update Statistics - Refresh stats in existing review files
+  - 📅 Week Start Day Configuration - Choose Monday or Sunday as week start
+  - 🌐 i18n Support - Review files generated in Japanese or English
+  - 📝 Improved Button Placement - Create button at top with stats preview
+  - ✅ Review completed tasks from this week
+  - Review Someday/Maybe list
+  - Check Waiting For items
+  - Review active projects
+
+### User Experience
 - 📱 **Responsive Design** - Optimized layout for different screen sizes (450px breakpoint)
 - 📏 **Resizable Panel** - Adjust Today/Other section heights in single-column layout
-- 🖱️ **Right-Click Context Menu** - Quick status changes via context menu
 - 🔄 **View Switcher** - Quick navigation between Tasks/Projects/Weekly Review
 - 🔄 **Manual Refresh** - 🔄 button in each view header, or "Refresh All Views" command
 - 🇯🇵 **Bilingual Support** - Full Japanese and English UI
+- 📝 **Daily Note Integration** - Auto-collect completed tasks with Dataview
 - 📝 **Markdown Native** - All data stored as markdown files
 - 🔗 **Backlink Integration** - Full Obsidian feature compatibility
 

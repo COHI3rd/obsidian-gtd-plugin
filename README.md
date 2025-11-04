@@ -2,7 +2,7 @@
 
 Notion風のドラッグ&ドロップUIで快適なGTD（Getting Things Done）タスク管理を実現するObsidianプラグインです。
 
-![GTD Plugin](https://img.shields.io/badge/version-0.1.0-blue)
+![GTD Plugin](https://img.shields.io/badge/version-1.2.0-blue)
 ![Obsidian](https://img.shields.io/badge/obsidian-v1.0.0+-purple)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -21,11 +21,17 @@ Notion風のドラッグ&ドロップUIで快適なGTD（Getting Things Done）�
 
 ### プロジェクト&レビュー
 - 📊 **プロジェクト管理** - 進捗率の自動計算、重要度・期限管理
+  - 📁 完了プロジェクトは月単位で整理（`完了/YYYY-MM/`）
+  - 🎯 タスク作成時は進行中のプロジェクトのみ表示
 - 🎯 **プロジェクト一覧ビュー** - ギャラリー形式でプロジェクトを管理
   - 統計サマリー表示（未開始・進行中）
   - ビューから直接プロジェクト作成
   - 📂 プロジェクトカード展開機能 - クリックでタスク一覧を表示（デフォルト: 閉じた状態）
 - 📋 **週次レビュービュー** - GTDの週次レビューをサポート
+  - 🔄 統計データ自動更新 - 既存レビューの統計を最新情報に更新
+  - 📅 週開始曜日設定 - 月曜/日曜始まりを選択可能
+  - 🌐 多言語対応 - レビューファイルが日本語/英語で自動生成
+  - 📝 ボタン配置改善 - 最上部に作成ボタン、統計プレビュー付き
   - ✅ 今週完了したタスクの振り返り（ビューを開くと自動更新）
   - いつかやる/多分やるリストの整理
   - 連絡待ちタスクの確認

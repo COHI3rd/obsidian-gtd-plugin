@@ -2,7 +2,80 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [1.2.0] - 2025-11-04
+
+### Added
+
+#### Weekly Review Enhancements
+- **🔄 Auto-Update Statistics**: Existing weekly review files now update statistics automatically
+  - No more "already exists" error when creating review for current week
+  - Completed tasks count and active projects count refresh each time
+  - Seamless workflow: create once, update anytime
+- **📅 Week Start Day Configuration**: Customizable week start preference
+  - Settings option to choose Monday or Sunday as week start
+  - Weekly review file naming based on week start date (not creation date)
+  - File format: `YYYY-MM-DD-weekly-review.md` (week start date)
+  - One review per week regardless of creation timing
+- **🌐 i18n Support for Weekly Review**: Multi-language review content generation
+  - Review file content generated in Japanese or English based on settings
+  - All section headers, labels, and placeholders localized
+  - Supports "件" suffix in Japanese, no suffix in English for counts
+- **📝 Improved Review Button Placement**: Better UX with top-positioned create button
+  - "Create New Review" button moved to top (aligned with other create buttons)
+  - Real-time statistics preview (completed tasks, active projects)
+  - Consistent UI across all views
+
+### Changed
+
+#### Project Management
+- **📁 Monthly Completion Folders**: Simplified completed project organization
+  - Changed from `完了/YYYY-MM-DD/` to `完了/YYYY-MM/` (monthly granularity)
+  - Projects complete less frequently than tasks, monthly grouping is sufficient
+  - Reduced folder clutter
+
+#### Task Creation
+- **🎯 Active Projects Only**: Completed projects excluded from task creation dropdown
+  - QuickAddModal project selector now filters out completed projects
+  - Prevents accidental task assignment to finished projects
+  - Cleaner, more relevant project selection
+
+### Fixed
+
+#### Weekly Review File Opening
+- **🚫 No More Split Pane Multiplication**: Fixed infinite pane splitting issue
+  - Changed from `getLeaf('split', 'vertical')` to `getLeaf(false)`
+  - Review file opens as new tab in current pane instead of creating new split
+  - If file already open: switches to existing tab (no duplication)
+  - Screen remains organized without unwanted splits
+
+### Technical
+
+#### Weekly Review Service
+- Added `language` parameter to WeeklyReviewService constructor
+- `updateSettings()` now accepts `language` parameter
+- `generateReviewContent()` uses i18n for all labels and placeholders
+- Week start day calculation integrated with settings
+- Auto-update mechanism with `updateReviewStatistics()` method
+- File naming based on `getWeekStart()` date calculation
+
+#### Project Service
+- Added `formatYearMonth()` method for YYYY-MM formatting
+- `moveProjectToCompleted()` uses monthly folder structure
+- Completion folder: `完了/YYYY-MM/` instead of `完了/YYYY-MM-DD/`
+
+#### i18n Additions
+- New texts: `reviewPeriodLabel`, `reviewAchievementsTitle`
+- `reviewCompletedTasks`, `reviewActiveProjects`
+- `reviewReflectionsTitle/Placeholder`, `reviewLearningsTitle/Placeholder`
+- `reviewNextWeekGoalsTitle/Placeholder`, `reviewNotesTitle/Placeholder`
+
+#### UI Improvements
+- `GTDMainView.loadProjects()` filters `status !== 'completed'`
+- Weekly review tab opening logic checks for existing leaves
+- CSS: `.gtd-weekly-review__create-section` with background styling
+- Workspace API usage: `getLeavesOfType('markdown')` for tab detection
+
+## [1.1.1] - 2025-11-02
 
 ### Added
 

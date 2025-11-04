@@ -1,7 +1,7 @@
 {
   "id": "gtd-task-manager",
   "name": "GTD Task Manager",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "minAppVersion": "1.0.0",
   "description": "GTD (Getting Things Done) task management plugin with Notion-style drag & drop UI for seamless workflow.",
   "author": "COHI",
