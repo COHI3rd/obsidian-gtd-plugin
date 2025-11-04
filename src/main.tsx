@@ -37,7 +37,7 @@ class GTDView extends ItemView {
     this.taskService = new TaskService(this.fileService);
     this.projectService = new ProjectService(this.app, plugin.settings);
     this.dailyNoteService = new DailyNoteService(this.app, plugin.settings);
-    this.weeklyReviewService = new WeeklyReviewService(this.app, plugin.settings.reviewFolder);
+    this.weeklyReviewService = new WeeklyReviewService(this.app, plugin.settings.reviewFolder, plugin.settings.weekStartDay);
     this.taskService.setDailyNoteService(this.dailyNoteService);
     this.taskService.setProjectService(this.projectService);
   }
@@ -169,7 +169,7 @@ class WeeklyReviewViewLeaf extends ItemView {
     this.fileService = new FileService(this.app, plugin.settings);
     this.taskService = new TaskService(this.fileService);
     this.projectService = new ProjectService(this.app, plugin.settings);
-    this.weeklyReviewService = new WeeklyReviewService(this.app, plugin.settings.reviewFolder);
+    this.weeklyReviewService = new WeeklyReviewService(this.app, plugin.settings.reviewFolder, plugin.settings.weekStartDay);
     this.taskService.setProjectService(this.projectService);
   }
 

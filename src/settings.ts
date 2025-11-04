@@ -18,6 +18,7 @@ export const DEFAULT_SETTINGS: GTDSettings = {
   dailyNoteFolder: '',
   dailyNoteDateFormat: 'YYYY-MM-DD',
   language: 'ja',
+  weekStartDay: 'monday',
 };
 
 /**
@@ -57,6 +58,23 @@ export class GTDSettingTab extends PluginSettingTab {
             this.plugin.rerenderAllViews();
             // 設定画面を再描画
             this.display();
+          })
+      );
+
+    // 週の開始曜日
+    new Setting(containerEl)
+      .setName(t.weekStartDay)
+      .setDesc(t.weekStartDayDesc)
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions({
+            monday: t.weekStartDayMonday,
+            sunday: t.weekStartDaySunday,
+          })
+          .setValue(this.plugin.settings.weekStartDay)
+          .onChange(async (value: any) => {
+            this.plugin.settings.weekStartDay = value;
+            await this.plugin.saveSettings();
           })
       );
 

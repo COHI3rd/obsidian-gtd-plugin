@@ -92,6 +92,7 @@ export interface WeeklyReview {
   reflections: string;
   learnings: string;
   nextWeekGoals: string;
+  weekStartDay: WeekStartDay;
 }
 
 /**
@@ -144,6 +145,11 @@ export type DailyNoteMode = 'none' | 'auto-write' | 'dataview' | 'command';
 export type Language = 'ja' | 'en';
 
 /**
+ * 週の開始曜日
+ */
+export type WeekStartDay = 'sunday' | 'monday';
+
+/**
  * プラグイン設定
  */
 export interface GTDSettings {
@@ -158,4 +164,5 @@ export interface GTDSettings {
   dailyNoteFolder: string;       // デイリーノートフォルダ
   dailyNoteDateFormat: string;   // デイリーノートの日付フォーマット
   language: Language;            // 表示言語
+  weekStartDay: WeekStartDay;    // 週の開始曜日
 }

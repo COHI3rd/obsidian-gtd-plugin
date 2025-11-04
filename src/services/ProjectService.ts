@@ -104,11 +104,71 @@ export class ProjectService {
 
       const content = this.stringifyProject(project);
       await this.app.vault.modify(file, content);
+
+      // プロジェクトが完了状態になった場合、完了フォルダに移動
+      if (project.status === 'completed') {
+        await this.moveProjectToCompleted(project);
+      }
     } catch (error) {
       console.error('Failed to update project:', error);
       new Notice('プロジェクトの更新に失敗しました');
       throw error;
     }
+  }
+
+  /**
+   * 完了プロジェクトを完了フォルダに移動
+   */
+  private async moveProjectToCompleted(project: Project): Promise<void> {
+    try {
+      const file = this.app.vault.getAbstractFileByPath(project.filePath);
+      if (!file || !(file instanceof TFile)) {
+        return;
+      }
+
+      // 既に完了フォルダにある場合はスキップ
+      if (project.filePath.includes('完了/')) {
+        return;
+      }
+
+      // 完了日を取得（今日）
+      const completedDate = project.completedDate || new Date();
+      const dateStr = this.formatDate(completedDate);
+
+      // 完了フォルダのパス: 完了/YYYY-MM-DD/
+      const completedFolder = `完了/${dateStr}`;
+
+      // フォルダを作成（存在しない場合）
+      const folder = this.app.vault.getAbstractFileByPath(completedFolder);
+      if (!folder) {
+        await this.app.vault.createFolder(completedFolder);
+      }
+
+      // 新しいファイルパス
+      const fileName = file.name;
+      const newPath = `${completedFolder}/${fileName}`;
+
+      // ファイルを移動
+      await this.app.fileManager.renameFile(file, newPath);
+
+      // プロジェクトのfilePathを更新
+      project.filePath = newPath;
+
+      console.log(`Project moved to completed: ${newPath}`);
+    } catch (error) {
+      console.error('Failed to move project to completed folder:', error);
+      // エラーは握りつぶす（移動失敗してもプロジェクト更新は成功扱い）
+    }
+  }
+
+  /**
+   * 日付を YYYY-MM-DD 形式にフォーマット
+   */
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   /**
@@ -268,16 +328,6 @@ export class ProjectService {
     );
 
     return matter.stringify('', cleanedFrontmatter);
-  }
-
-  /**
-   * 日付をYYYY-MM-DD形式に変換
-   */
-  private formatDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   /**

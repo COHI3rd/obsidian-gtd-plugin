@@ -91,6 +91,10 @@ export interface I18nTexts {
   dailyNoteDateFormatDesc: string;
   language: string;
   languageDesc: string;
+  weekStartDay: string;
+  weekStartDayDesc: string;
+  weekStartDayMonday: string;
+  weekStartDaySunday: string;
 
   // 使い方
   usage: string;
@@ -252,6 +256,10 @@ export const texts: Record<Language, I18nTexts> = {
     dailyNoteDateFormatDesc: 'デイリーノートのファイル名に使用される日付フォーマット（例: YYYY-MM-DD, YYYY年MM月DD日）※YYYY/yyyyどちらも対応',
     language: '言語 / Language',
     languageDesc: '表示言語を選択 / Select display language',
+    weekStartDay: '週の開始曜日',
+    weekStartDayDesc: '週次レビューで使用する週の開始曜日を選択',
+    weekStartDayMonday: '月曜日',
+    weekStartDaySunday: '日曜日',
 
     // 使い方
     usage: '使い方',
@@ -412,6 +420,10 @@ export const texts: Record<Language, I18nTexts> = {
     dailyNoteDateFormatDesc: 'Date format used in daily note filenames (e.g., YYYY-MM-DD, YYYY年MM月DD日)',
     language: 'Language / 言語',
     languageDesc: 'Select display language / 表示言語を選択',
+    weekStartDay: 'Week Start Day',
+    weekStartDayDesc: 'Select the start day of the week for weekly review',
+    weekStartDayMonday: 'Monday',
+    weekStartDaySunday: 'Sunday',
 
     // Usage
     usage: 'How to Use',

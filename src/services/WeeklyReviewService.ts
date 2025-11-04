@@ -1,6 +1,6 @@
 import { App, TFile, TFolder } from 'obsidian';
 import { WeeklyReview } from '../models/WeeklyReview';
-import { WeeklyReviewFrontmatter } from '../types';
+import { WeeklyReviewFrontmatter, WeekStartDay } from '../types';
 import * as yaml from 'js-yaml';
 
 /**
@@ -10,17 +10,20 @@ import * as yaml from 'js-yaml';
 export class WeeklyReviewService {
   private app: App;
   private reviewFolder: string;
+  private weekStartDay: WeekStartDay;
 
-  constructor(app: App, reviewFolder: string) {
+  constructor(app: App, reviewFolder: string, weekStartDay: WeekStartDay = 'monday') {
     this.app = app;
     this.reviewFolder = reviewFolder;
+    this.weekStartDay = weekStartDay;
   }
 
   /**
    * 設定を更新
    */
-  updateSettings(reviewFolder: string): void {
+  updateSettings(reviewFolder: string, weekStartDay: WeekStartDay): void {
     this.reviewFolder = reviewFolder;
+    this.weekStartDay = weekStartDay;
   }
 
   /**
@@ -72,6 +75,7 @@ export class WeeklyReviewService {
       reflections: options.reflections || '',
       learnings: options.learnings || '',
       nextWeekGoals: options.nextWeekGoals || '',
+      weekStartDay: this.weekStartDay,
     });
 
     // Markdownコンテンツを生成

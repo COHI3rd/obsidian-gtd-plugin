@@ -1,4 +1,4 @@
-import { WeeklyReview as IWeeklyReview } from '../types';
+import { WeeklyReview as IWeeklyReview, WeekStartDay } from '../types';
 
 /**
  * 週次レビューモデルクラス
@@ -15,8 +15,9 @@ export class WeeklyReview implements IWeeklyReview {
   reflections: string;
   learnings: string;
   nextWeekGoals: string;
+  weekStartDay: WeekStartDay;
 
-  constructor(data: Partial<WeeklyReview> & { id: string; date: Date; filePath: string }) {
+  constructor(data: Partial<WeeklyReview> & { id: string; date: Date; filePath: string; weekStartDay?: WeekStartDay }) {
     this.id = data.id;
     this.date = data.date;
     this.reviewType = 'weekly';
@@ -27,20 +28,29 @@ export class WeeklyReview implements IWeeklyReview {
     this.reflections = data.reflections || '';
     this.learnings = data.learnings || '';
     this.nextWeekGoals = data.nextWeekGoals || '';
+    this.weekStartDay = data.weekStartDay || 'monday';
   }
 
   /**
-   * レビューの週の開始日を取得（月曜日）
+   * レビューの週の開始日を取得
    */
   getWeekStart(): Date {
     const date = new Date(this.date);
     const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // 月曜日を週の開始とする
-    return new Date(date.setDate(diff));
+
+    if (this.weekStartDay === 'monday') {
+      // 月曜日を週の開始とする
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+      return new Date(date.setDate(diff));
+    } else {
+      // 日曜日を週の開始とする
+      const diff = date.getDate() - day;
+      return new Date(date.setDate(diff));
+    }
   }
 
   /**
-   * レビューの週の終了日を取得（日曜日）
+   * レビューの週の終了日を取得
    */
   getWeekEnd(): Date {
     const start = this.getWeekStart();
