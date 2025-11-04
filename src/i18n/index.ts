@@ -157,18 +157,11 @@ export interface I18nTexts {
   weeklyReviewTooltip: string;
 
   // 週次レビュー保存
-  saveReview: string;
-  saveReviewSuccess: string;
-  saveReviewError: string;
+  createNewReview: string;
+  createReviewSuccess: string;
+  createReviewError: string;
   reviewAlreadyExists: string;
-  reflectionsLabel: string;
-  reflectionsPlaceholder: string;
-  learningsLabel: string;
-  learningsPlaceholder: string;
-  nextWeekGoalsLabel: string;
-  nextWeekGoalsPlaceholder: string;
-  notesLabel: string;
-  notesPlaceholder: string;
+  reviewCreatedAndOpened: string;
 }
 
 export const texts: Record<Language, I18nTexts> = {
@@ -325,18 +318,11 @@ export const texts: Record<Language, I18nTexts> = {
     weeklyReviewTooltip: '週次レビュー',
 
     // 週次レビュー保存
-    saveReview: '📝 レビューを保存',
-    saveReviewSuccess: '✅ レビューを保存しました',
-    saveReviewError: '❌ レビューの保存に失敗しました',
-    reviewAlreadyExists: '⚠️ 今週のレビューは既に保存されています',
-    reflectionsLabel: '💭 振り返り',
-    reflectionsPlaceholder: '今週の振り返りを記入してください...',
-    learningsLabel: '📚 学んだこと',
-    learningsPlaceholder: '今週学んだことを記入してください...',
-    nextWeekGoalsLabel: '🎯 来週の目標',
-    nextWeekGoalsPlaceholder: '来週の目標を記入してください...',
-    notesLabel: '📝 その他メモ',
-    notesPlaceholder: 'その他のメモがあれば記入してください...',
+    createNewReview: '📝 新規レビューを作成',
+    createReviewSuccess: '✅ レビューを作成しました',
+    createReviewError: '❌ レビューの作成に失敗しました',
+    reviewAlreadyExists: '⚠️ 今週のレビューは既に作成されています',
+    reviewCreatedAndOpened: '📝 レビューファイルを作成しました。左側のエディタで編集できます。',
   },
 
   en: {
@@ -492,18 +478,11 @@ export const texts: Record<Language, I18nTexts> = {
     weeklyReviewTooltip: 'Weekly Review',
 
     // Weekly Review Save
-    saveReview: '📝 Save Review',
-    saveReviewSuccess: '✅ Review saved successfully',
-    saveReviewError: '❌ Failed to save review',
+    createNewReview: '📝 Create New Review',
+    createReviewSuccess: '✅ Review created successfully',
+    createReviewError: '❌ Failed to create review',
     reviewAlreadyExists: '⚠️ This week\'s review already exists',
-    reflectionsLabel: '💭 Reflections',
-    reflectionsPlaceholder: 'What went well this week? What could be improved?',
-    learningsLabel: '📚 Learnings',
-    learningsPlaceholder: 'What did you learn this week?',
-    nextWeekGoalsLabel: '🎯 Goals for Next Week',
-    nextWeekGoalsPlaceholder: 'What are your goals for next week?',
-    notesLabel: '📝 Additional Notes',
-    notesPlaceholder: 'Any other notes or thoughts?',
+    reviewCreatedAndOpened: '📝 Review file created. You can edit it in the left editor.',
   },
 };
 

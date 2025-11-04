@@ -49,12 +49,6 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [selectedSection, setSelectedSection] = useState<'someday' | 'waiting' | 'projects' | 'completed'>('completed');
 
-  // レビュー入力フィールド
-  const [reflections, setReflections] = useState('');
-  const [learnings, setLearnings] = useState('');
-  const [nextWeekGoals, setNextWeekGoals] = useState('');
-  const [notes, setNotes] = useState('');
-
   // データを読み込み
   const loadData = async (silent = false) => {
     try {
@@ -186,8 +180,8 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
     }
   };
 
-  // レビューを保存
-  const handleSaveReview = async () => {
+  // 新規レビューを作成
+  const handleCreateReview = async () => {
     try {
       // 既存レビューチェック
       const hasReview = await weeklyReviewService.hasReviewForCurrentWeek();
@@ -196,32 +190,24 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
         return;
       }
 
-      // レビュー作成
+      // レビュー作成（統計情報のみ）
       const review = await weeklyReviewService.createWeeklyReview(new Date(), {
         completedTasksCount: completedThisWeek.length,
         activeProjectsCount: activeProjects.length,
-        reflections,
-        learnings,
-        nextWeekGoals,
-        notes,
       });
 
-      new Notice(t.saveReviewSuccess);
+      new Notice(t.reviewCreatedAndOpened);
 
-      // レビューファイルを開く
+      // レビューファイルを左ペインで開く
       const file = fileService.getApp().vault.getAbstractFileByPath(review.filePath);
       if (file) {
-        await fileService.getApp().workspace.getLeaf(false).openFile(file as any);
+        // 新しいLeafを左側に作成して開く
+        const leaf = fileService.getApp().workspace.getLeaf('split', 'vertical');
+        await leaf.openFile(file as any);
       }
-
-      // フィールドをクリア
-      setReflections('');
-      setLearnings('');
-      setNextWeekGoals('');
-      setNotes('');
     } catch (error) {
-      console.error('Failed to save review:', error);
-      new Notice(t.saveReviewError);
+      console.error('Failed to create review:', error);
+      new Notice(t.createReviewError);
     }
   };
 
@@ -507,65 +493,23 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
         </div>
       )}
 
-      {/* レビュー保存セクション */}
+      {/* 新規レビュー作成セクション */}
       <div className="gtd-weekly-review__section">
         <div className="gtd-weekly-review__section-header">
-          <h3>{t.saveReview}</h3>
+          <h3>{t.createNewReview}</h3>
+          <p className="gtd-weekly-review__hint">
+            レビューファイルを作成して、Obsidianエディタで自由に編集できます。<br />
+            今週の成果（完了タスク{completedThisWeek.length}件、進行中プロジェクト{activeProjects.length}件）が自動で転記されます。
+          </p>
         </div>
 
-        <div className="gtd-weekly-review__review-form">
-          <div className="gtd-form-group">
-            <label>{t.reflectionsLabel}</label>
-            <textarea
-              className="gtd-input"
-              value={reflections}
-              onChange={(e) => setReflections(e.target.value)}
-              placeholder={t.reflectionsPlaceholder}
-              rows={4}
-            />
-          </div>
-
-          <div className="gtd-form-group">
-            <label>{t.learningsLabel}</label>
-            <textarea
-              className="gtd-input"
-              value={learnings}
-              onChange={(e) => setLearnings(e.target.value)}
-              placeholder={t.learningsPlaceholder}
-              rows={4}
-            />
-          </div>
-
-          <div className="gtd-form-group">
-            <label>{t.nextWeekGoalsLabel}</label>
-            <textarea
-              className="gtd-input"
-              value={nextWeekGoals}
-              onChange={(e) => setNextWeekGoals(e.target.value)}
-              placeholder={t.nextWeekGoalsPlaceholder}
-              rows={4}
-            />
-          </div>
-
-          <div className="gtd-form-group">
-            <label>{t.notesLabel}</label>
-            <textarea
-              className="gtd-input"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder={t.notesPlaceholder}
-              rows={3}
-            />
-          </div>
-
-          <button
-            className="gtd-button gtd-button--primary"
-            onClick={handleSaveReview}
-            style={{ width: '100%', marginTop: '12px' }}
-          >
-            {t.saveReview}
-          </button>
-        </div>
+        <button
+          className="gtd-button gtd-button--primary"
+          onClick={handleCreateReview}
+          style={{ width: '100%', padding: '16px', fontSize: '16px' }}
+        >
+          {t.createNewReview}
+        </button>
       </div>
 
       {/* 週次レビューのヒント */}
