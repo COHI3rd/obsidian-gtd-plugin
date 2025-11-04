@@ -204,8 +204,9 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
           workspace.setActiveLeaf(existingLeaf, { focus: true });
           new Notice(t.reviewCreatedAndOpened);
         } else {
-          // 開いていない場合は左ペインで新しく開く
-          const leaf = workspace.getLeaf('split', 'vertical');
+          // 開いていない場合は、既存のペイン内に新しいタブとして開く
+          // 最も最近使用されたmarkdown leafを取得、なければ新しいタブとして開く
+          const leaf = workspace.getLeaf(false);
           await leaf.openFile(file as any);
           new Notice(t.reviewCreatedAndOpened);
         }
