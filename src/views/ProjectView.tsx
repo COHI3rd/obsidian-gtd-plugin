@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Project, ProjectStatus, GTDSettings, Task } from '../types';
+import { Project, ProjectStatus, GTDSettings, Task, TaskStatus, TaskPriority } from '../types';
 import { ProjectCard } from '../components/ProjectCard';
 import { ViewSwitcher, ViewType } from '../components/ViewSwitcher';
 import { CreateProjectModal } from '../components/CreateProjectModal';
+import { QuickAddModal } from '../components/QuickAddModal';
 import { ProjectService } from '../services/ProjectService';
 import { TaskService } from '../services/TaskService';
 import { FileService } from '../services/FileService';
@@ -39,6 +40,9 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
   const [filterStatus, setFilterStatus] = useState<ProjectStatus | 'all'>('all');
   const [sortBy, setSortBy] = useState<'deadline' | 'importance' | 'progress'>('importance');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCompletedCollapsed, setIsCompletedCollapsed] = useState(true);
+  const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
+  const [targetProject, setTargetProject] = useState<Project | null>(null);
 
   // データを読み込み
   const loadData = async (silent = false) => {
@@ -78,28 +82,39 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
     }
   }, []);
 
+  // アクティブプロジェクト（未着手・進行中）と完了プロジェクトを分離
+  const activeProjects = projects.filter(p => p.status !== 'completed');
+  const completedProjects = projects.filter(p => p.status === 'completed');
+
   // プロジェクトをフィルタリング
-  const filteredProjects = projects.filter(project => {
-    if (filterStatus === 'all') return true;
-    return project.status === filterStatus;
-  });
+  const filterProjects = (projectList: Project[]) => {
+    return projectList.filter(project => {
+      if (filterStatus === 'all') return true;
+      return project.status === filterStatus;
+    });
+  };
 
   // プロジェクトをソート
-  const sortedProjects = [...filteredProjects].sort((a, b) => {
-    switch (sortBy) {
-      case 'deadline':
-        if (!a.deadline && !b.deadline) return 0;
-        if (!a.deadline) return 1;
-        if (!b.deadline) return -1;
-        return a.deadline.getTime() - b.deadline.getTime();
-      case 'importance':
-        return b.importance - a.importance;
-      case 'progress':
-        return b.progress - a.progress;
-      default:
-        return 0;
-    }
-  });
+  const sortProjects = (projectList: Project[]) => {
+    return [...projectList].sort((a, b) => {
+      switch (sortBy) {
+        case 'deadline':
+          if (!a.deadline && !b.deadline) return 0;
+          if (!a.deadline) return 1;
+          if (!b.deadline) return -1;
+          return a.deadline.getTime() - b.deadline.getTime();
+        case 'importance':
+          return b.importance - a.importance;
+        case 'progress':
+          return b.progress - a.progress;
+        default:
+          return 0;
+      }
+    });
+  };
+
+  const filteredActiveProjects = sortProjects(filterProjects(activeProjects));
+  const filteredCompletedProjects = sortProjects(filterProjects(completedProjects));
 
   // プロジェクトの統計
   const stats = {
@@ -147,7 +162,19 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
   // プロジェクトのステータスを変更
   const handleStatusChange = async (project: Project, newStatus: ProjectStatus) => {
     try {
+      const oldStatus = project.status;
       project.changeStatus(newStatus);
+
+      // ステータスが not-started → in-progress に変わったら開始日を設定
+      if (oldStatus === 'not-started' && newStatus === 'in-progress') {
+        project.start();
+      }
+
+      // ステータスが completed に変わったら完了日を設定
+      if (newStatus === 'completed' && oldStatus !== 'completed') {
+        project.complete();
+      }
+
       await projectService.updateProject(project);
       await loadData(true);
     } catch (error) {
@@ -170,11 +197,8 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
   const handleTaskToggleComplete = async (task: Task) => {
     try {
       console.log('[ProjectView] Toggling task:', task.id, task.title, 'current completed:', task.completed);
-      const newCompletedState = !task.completed;
-      task.completed ? task.uncomplete() : task.complete();
-      console.log('[ProjectView] New completed state:', task.completed);
-      await taskService.updateTask(task);
-      console.log('[ProjectView] Task updated in file, reloading...');
+      await taskService.toggleTaskComplete(task.id);
+      console.log('[ProjectView] Task toggled, reloading...');
       await loadData(true);
       console.log('[ProjectView] Data reloaded');
 
@@ -184,6 +208,38 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
       }
     } catch (error) {
       console.error('[ProjectView] Failed to toggle task completion:', error);
+    }
+  };
+
+  // プロジェクトにタスクを追加
+  const handleAddTask = (project: Project) => {
+    setTargetProject(project);
+    setIsAddTaskModalOpen(true);
+  };
+
+  // タスク追加を実行
+  const handleAddTaskSubmit = async (
+    title: string,
+    status: TaskStatus,
+    priority: TaskPriority,
+    project?: string
+  ) => {
+    try {
+      await taskService.createTask({
+        title,
+        status,
+        priority,
+        project: project || (targetProject ? `[[${targetProject.title}]]` : undefined),
+      });
+
+      await loadData(true);
+
+      // 他のビューも更新
+      if (onTaskUpdated) {
+        onTaskUpdated();
+      }
+    } catch (error) {
+      console.error('[ProjectView] Failed to add task:', error);
     }
   };
 
@@ -269,8 +325,8 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
         </div>
       </div>
 
-      {/* プロジェクト一覧 */}
-      {sortedProjects.length === 0 ? (
+      {/* アクティブプロジェクト一覧 */}
+      {filteredActiveProjects.length === 0 && filteredCompletedProjects.length === 0 ? (
         <div className="gtd-project-view__empty">
           <p>
             {filterStatus === 'all'
@@ -279,30 +335,79 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
           </p>
         </div>
       ) : (
-        <div className="gtd-project-view__grid">
-          {sortedProjects.map(project => {
-            // このプロジェクトに関連するタスク数を計算
-            const relatedTasks = allTasks.filter(t => {
-              const projectLink = `[[${project.title}]]`;
-              return t.project === projectLink;
-            });
-            const completedTasks = relatedTasks.filter(t => t.completed);
+        <>
+          {/* アクティブプロジェクト */}
+          {filteredActiveProjects.length > 0 && (
+            <div className="gtd-project-group">
+              <div className="gtd-project-view__grid">
+                {filteredActiveProjects.map(project => {
+                  const relatedTasks = allTasks.filter(t => {
+                    const projectLink = `[[${project.title}]]`;
+                    return t.project === projectLink && t.status !== 'trash';
+                  });
 
-            return (
-              <div key={project.id} className="gtd-project-view__item">
-                <ProjectCard
-                  project={project}
-                  tasks={relatedTasks}
-                  onClick={() => openProject(project)}
-                  onStatusChange={handleStatusChange}
-                  onImportanceChange={handleImportanceChange}
-                  onTaskClick={(task) => fileService.openFile(task.filePath)}
-                  onTaskToggleComplete={handleTaskToggleComplete}
-                />
+                  return (
+                    <div key={project.id} className="gtd-project-view__item">
+                      <ProjectCard
+                        project={project}
+                        tasks={relatedTasks}
+                        onClick={() => openProject(project)}
+                        onStatusChange={handleStatusChange}
+                        onImportanceChange={handleImportanceChange}
+                        onTaskClick={(task) => fileService.openFile(task.filePath)}
+                        onTaskToggleComplete={handleTaskToggleComplete}
+                        onAddTask={handleAddTask}
+                      />
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          )}
+
+          {/* 完了プロジェクト */}
+          {filteredCompletedProjects.length > 0 && (
+            <div className="gtd-project-group gtd-project-group--completed">
+              <div
+                className="gtd-project-group__header"
+                onClick={() => setIsCompletedCollapsed(!isCompletedCollapsed)}
+              >
+                <span className="gtd-project-group__toggle">
+                  {isCompletedCollapsed ? '▶' : '▼'}
+                </span>
+                <h3 className="gtd-project-group__title">
+                  {t.completed} ({filteredCompletedProjects.length})
+                </h3>
+              </div>
+
+              {!isCompletedCollapsed && (
+                <div className="gtd-project-view__grid">
+                  {filteredCompletedProjects.map(project => {
+                    const relatedTasks = allTasks.filter(t => {
+                      const projectLink = `[[${project.title}]]`;
+                      return t.project === projectLink && t.status !== 'trash';
+                    });
+
+                    return (
+                      <div key={project.id} className="gtd-project-view__item">
+                        <ProjectCard
+                          project={project}
+                          tasks={relatedTasks}
+                          onClick={() => openProject(project)}
+                          onStatusChange={handleStatusChange}
+                          onImportanceChange={handleImportanceChange}
+                          onTaskClick={(task) => fileService.openFile(task.filePath)}
+                          onTaskToggleComplete={handleTaskToggleComplete}
+                          onAddTask={handleAddTask}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* プロジェクト作成モーダル */}
@@ -311,6 +416,18 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateProject}
         settings={settings}
+      />
+
+      {/* タスク追加モーダル */}
+      <QuickAddModal
+        isOpen={isAddTaskModalOpen}
+        onClose={() => {
+          setIsAddTaskModalOpen(false);
+          setTargetProject(null);
+        }}
+        onSubmit={handleAddTaskSubmit}
+        settings={settings}
+        defaultProject={targetProject ? `[[${targetProject.title}]]` : undefined}
       />
     </div>
   );

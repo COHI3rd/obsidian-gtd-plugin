@@ -274,6 +274,10 @@ export class TaskService {
     const taskModel = new TaskModel(task);
     taskModel.changeStatus('trash');
 
+    // ゴミ箱に移動する際は日付と完了ステータスをクリア
+    taskModel.setDate(null);
+    taskModel.uncomplete();
+
     await this.fileService.updateTask(taskModel);
 
     // ファイルを ゴミ箱 フォルダに移動

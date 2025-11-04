@@ -73,6 +73,8 @@ export class ProjectService {
         status: 'not-started',
         actionPlan: data.actionPlan || '',
         progress: 0,
+        startedDate: null,
+        completedDate: null,
         filePath,
       });
 
@@ -149,6 +151,8 @@ export class ProjectService {
         status: data.status || 'not-started',
         actionPlan: data['action-plan'] || '',
         progress: data.progress || 0,
+        startedDate: data['started-date'] ? new Date(data['started-date']) : null,
+        completedDate: data['completed-date'] ? new Date(data['completed-date']) : null,
         filePath,
       });
     } catch (error) {
@@ -254,6 +258,8 @@ export class ProjectService {
       status: project.status,
       'action-plan': project.actionPlan || undefined,
       progress: project.progress,
+      'started-date': project.startedDate ? this.formatDate(project.startedDate) : undefined,
+      'completed-date': project.completedDate ? this.formatDate(project.completedDate) : undefined,
     };
 
     // undefinedのプロパティを除去

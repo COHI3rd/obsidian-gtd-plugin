@@ -11,6 +11,7 @@ interface ProjectCardProps {
   onImportanceChange?: (project: Project, importance: number) => void;
   onTaskClick?: (task: Task) => void;
   onTaskToggleComplete?: (task: Task) => void;
+  onAddTask?: (project: Project) => void;
 }
 
 /**
@@ -24,7 +25,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onStatusChange,
   onImportanceChange,
   onTaskClick,
-  onTaskToggleComplete
+  onTaskToggleComplete,
+  onAddTask
 }) => {
   // デフォルトは閉じた状態（false）
   const [isExpanded, setIsExpanded] = useState(false);
@@ -107,35 +109,51 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
       {/* ステータス */}
       <div className="gtd-project-card__status">
-        {onStatusChange ? (
-          <select
-            value={project.status}
-            onChange={handleStatusChange}
-            className="gtd-project-card__status-select"
-            style={{ backgroundColor: getStatusColor() }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <option value="not-started">未着手</option>
-            <option value="in-progress">進行中</option>
-            <option value="completed">完了</option>
-          </select>
-        ) : (
-          <span
-            className="gtd-project-card__status-badge"
-            style={{ backgroundColor: getStatusColor() }}
-          >
-            {getStatusLabel()}
-          </span>
-        )}
+        <div className="gtd-project-card__status-left">
+          {onStatusChange ? (
+            <select
+              value={project.status}
+              onChange={handleStatusChange}
+              className="gtd-project-card__status-select"
+              style={{ backgroundColor: getStatusColor() }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <option value="not-started">未着手</option>
+              <option value="in-progress">進行中</option>
+              <option value="completed">完了</option>
+            </select>
+          ) : (
+            <span
+              className="gtd-project-card__status-badge"
+              style={{ backgroundColor: getStatusColor() }}
+            >
+              {getStatusLabel()}
+            </span>
+          )}
 
-        {project.deadline && (
-          <span
-            className={`gtd-project-card__deadline ${
-              project.isOverdue() ? 'gtd-project-card__deadline--overdue' : ''
-            }`}
+          {project.deadline && (
+            <span
+              className={`gtd-project-card__deadline ${
+                project.isOverdue() ? 'gtd-project-card__deadline--overdue' : ''
+              }`}
+            >
+              📅 {DateManager.getRelativeString(project.deadline)}
+            </span>
+          )}
+        </div>
+
+        {/* タスク追加ボタン */}
+        {onAddTask && (
+          <button
+            className="gtd-button gtd-button--text gtd-button--small gtd-project-card__add-task-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddTask(project);
+            }}
+            title="タスクを追加"
           >
-            📅 {DateManager.getRelativeString(project.deadline)}
-          </span>
+            + タスク追加
+          </button>
         )}
       </div>
 

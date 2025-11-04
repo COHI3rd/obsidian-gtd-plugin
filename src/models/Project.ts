@@ -16,6 +16,8 @@ export class ProjectModel implements Project {
   status: ProjectStatus;
   actionPlan: string;
   progress: number;
+  startedDate: Date | null;
+  completedDate: Date | null;
   filePath: string;
 
   constructor(data: Partial<Project>) {
@@ -26,6 +28,8 @@ export class ProjectModel implements Project {
     this.status = data.status || 'not-started';
     this.actionPlan = data.actionPlan || '';
     this.progress = data.progress || 0;
+    this.startedDate = data.startedDate || null;
+    this.completedDate = data.completedDate || null;
     this.filePath = data.filePath || '';
   }
 
@@ -67,6 +71,10 @@ export class ProjectModel implements Project {
   complete(): void {
     this.status = 'completed';
     this.progress = 100;
+    // 完了日が未設定の場合のみ設定
+    if (!this.completedDate) {
+      this.completedDate = new Date();
+    }
   }
 
   /**
@@ -75,6 +83,10 @@ export class ProjectModel implements Project {
   start(): void {
     if (this.status === 'not-started') {
       this.status = 'in-progress';
+      // 開始日が未設定の場合のみ設定
+      if (!this.startedDate) {
+        this.startedDate = new Date();
+      }
     }
   }
 }

@@ -65,6 +65,8 @@ export interface Project {
   status: ProjectStatus;
   actionPlan: string;            // アクションプラン（マルチライン）
   progress: number;              // 0-100（自動計算）
+  startedDate: Date | null;      // 開始日（in-progressになった日）
+  completedDate: Date | null;    // 完了日（completedになった日）
   filePath: string;
 
   // メソッド
@@ -112,6 +114,8 @@ export interface ProjectFrontmatter {
   status?: ProjectStatus;
   'action-plan'?: string;
   progress?: number;
+  'started-date'?: string | Date;
+  'completed-date'?: string | Date;
 }
 
 /**

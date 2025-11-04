@@ -8,6 +8,7 @@ interface QuickAddModalProps {
   onSubmit: (title: string, status: TaskStatus, priority: TaskPriority, project?: string) => void;
   projects?: Project[];
   settings: GTDSettings;
+  defaultProject?: string;
 }
 
 /**
@@ -20,6 +21,7 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
   onSubmit,
   projects = [],
   settings,
+  defaultProject,
 }) => {
   const t = getText(settings.language);
   const [title, setTitle] = useState('');
@@ -28,12 +30,17 @@ export const QuickAddModal: React.FC<QuickAddModalProps> = ({
   const [project, setProject] = useState<string>('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // モーダルが開いたら入力欄にフォーカス
+  // モーダルが開いたら入力欄にフォーカスし、デフォルトプロジェクトを設定
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+    if (isOpen) {
+      if (inputRef.current) {
+        inputRef.current.focus();
+      }
+      if (defaultProject) {
+        setProject(defaultProject);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, defaultProject]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

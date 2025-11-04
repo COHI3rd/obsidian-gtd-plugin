@@ -98,6 +98,11 @@ export class FileService {
       const content = TaskParser.stringify(task);
       await this.app.vault.modify(file, content);
 
+      // ゴミ箱ステータスの場合は自動移動をスキップ（moveTaskToFolderで明示的に移動される）
+      if (task.status === 'trash') {
+        return;
+      }
+
       // 完了状態が変更された場合、ファイルを移動
       if (task.completed) {
         await this.moveTaskToCompletedFolder(file, task);
@@ -238,6 +243,9 @@ export class FileService {
 
       // ファイルを移動
       await this.app.fileManager.renameFile(file, newPath);
+
+      // タスクのfilePathを更新
+      task.filePath = newPath;
     } catch (error) {
       console.error('Failed to move task to folder:', error);
       new Notice('タスクの移動に失敗しました');
