@@ -1160,7 +1160,7 @@ div[style*="position: fixed"] .gtd-task-card {
 }
 
 .gtd-weekly-review__header {
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .gtd-weekly-review__header-top {
@@ -1191,32 +1191,55 @@ div[style*="position: fixed"] .gtd-task-card {
   color: var(--text-muted);
 }
 
-.gtd-weekly-review__create-section {
-  background: var(--background-secondary);
-  border: 2px solid var(--background-modifier-border);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* 新規レビュー作成ボタン（全幅） */
+.gtd-weekly-review__create-button {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
 }
 
-.gtd-weekly-review__create-hint {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 13px;
-  text-align: center;
-}
-
-/* タブ */
+/* タブ（アイコンのみ、1行） */
 .gtd-weekly-review__tabs {
   display: flex;
   gap: 8px;
+  margin-bottom: 12px;
+  justify-content: space-evenly;
+}
+
+.gtd-tab--icon {
+  flex: 1;
+  min-width: 0;
+  padding: 12px;
+  font-size: 20px;
+}
+
+/* 統計情報（1行） */
+.gtd-weekly-review__stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   margin-bottom: 20px;
-  border-bottom: 2px solid var(--background-modifier-border);
-  padding-bottom: 8px;
-  flex-wrap: wrap;
+  padding: 10px;
+  background: var(--background-secondary);
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--text-normal);
+}
+
+.gtd-weekly-review__stat-item {
+  color: var(--text-muted);
+}
+
+.gtd-weekly-review__stat-item strong {
+  color: var(--text-normal);
+  font-weight: 600;
+}
+
+.gtd-weekly-review__stat-separator {
+  color: var(--text-faint);
 }
 
 .gtd-tab {

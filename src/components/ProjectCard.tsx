@@ -175,7 +175,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="gtd-project-card__toggle" onClick={toggleExpand}>
           <span>{isExpanded ? '▼' : '▶'}</span>
           <span className="gtd-project-card__task-count">
-            タスク ({tasks.filter(t => !t.completed).length}/{tasks.length})
+            タスク ({tasks.filter(t => t.completed).length}/{tasks.length})
           </span>
         </div>
       )}

@@ -33,6 +33,7 @@ export class ProjectCalculator {
 
   /**
    * プロジェクトに関連する子タスクを取得
+   * ゴミ箱のタスクは除外する
    *
    * @param project - 対象プロジェクト
    * @param allTasks - 全タスクリスト
@@ -44,6 +45,8 @@ export class ProjectCalculator {
 
     return allTasks.filter((task) => {
       if (!task.project) return false;
+      // ゴミ箱のタスクは除外
+      if (task.status === 'trash') return false;
       // [[プロジェクト名]] または [[ファイル名]] でマッチング
       return task.project === projectLink || task.project === projectLinkAlt;
     });

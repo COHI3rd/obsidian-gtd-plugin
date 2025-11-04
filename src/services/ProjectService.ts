@@ -18,26 +18,42 @@ export class ProjectService {
 
   /**
    * 全プロジェクトを取得
+   * プロジェクトフォルダと完了フォルダの両方から取得
    */
   async getAllProjects(): Promise<Project[]> {
     const projects: Project[] = [];
-    const folder = this.app.vault.getAbstractFileByPath(this.settings.projectFolder);
 
-    if (!folder || !(folder instanceof TFolder)) {
-      return projects;
+    // プロジェクトフォルダから取得
+    const projectFolder = this.app.vault.getAbstractFileByPath(this.settings.projectFolder);
+    if (projectFolder && projectFolder instanceof TFolder) {
+      const files = this.getMarkdownFiles(projectFolder);
+      for (const file of files) {
+        try {
+          const content = await this.app.vault.read(file);
+          const project = this.parseProject(content, file.path);
+          if (project) {
+            projects.push(project);
+          }
+        } catch (error) {
+          console.error(`Failed to read project file: ${file.path}`, error);
+        }
+      }
     }
 
-    const files = this.getMarkdownFiles(folder);
-
-    for (const file of files) {
-      try {
-        const content = await this.app.vault.read(file);
-        const project = this.parseProject(content, file.path);
-        if (project) {
-          projects.push(project);
+    // 完了フォルダから取得
+    const completedFolder = this.app.vault.getAbstractFileByPath('完了');
+    if (completedFolder && completedFolder instanceof TFolder) {
+      const files = this.getMarkdownFiles(completedFolder);
+      for (const file of files) {
+        try {
+          const content = await this.app.vault.read(file);
+          const project = this.parseProject(content, file.path);
+          if (project) {
+            projects.push(project);
+          }
+        } catch (error) {
+          console.error(`Failed to read completed project file: ${file.path}`, error);
         }
-      } catch (error) {
-        console.error(`Failed to read project file: ${file.path}`, error);
       }
     }
 

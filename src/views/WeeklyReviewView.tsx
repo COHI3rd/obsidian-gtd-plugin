@@ -74,14 +74,53 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       setActiveProjects(active);
 
       // 今週完了したタスクを抽出
+      // 週の範囲を計算（WeeklyReviewServiceと同じロジックを使用）
+      const getWeekStart = (date: Date, weekStartDay: typeof settings.weekStartDay): Date => {
+        const d = new Date(date);
+        const day = d.getDay();
+
+        if (weekStartDay === 'monday') {
+          // 月曜日を週の開始とする
+          const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+          d.setDate(diff);
+        } else {
+          // 日曜日を週の開始とする
+          const diff = d.getDate() - day;
+          d.setDate(diff);
+        }
+        d.setHours(0, 0, 0, 0);
+        return d;
+      };
+
+      const getWeekEnd = (weekStart: Date): Date => {
+        const end = new Date(weekStart);
+        end.setDate(weekStart.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+        return end;
+      };
+
       const now = new Date();
-      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const weekStart = getWeekStart(now, settings.weekStartDay);
+      const weekEnd = getWeekEnd(weekStart);
+
       const completed = tasks.filter(t => {
         if (!t.completed) return false;
-        // 完了日が今週以内（dateフィールドを完了日として使用）
-        if (t.date && t.date >= oneWeekAgo && t.date <= now) {
-          return true;
+
+        // ファイルパスから完了日付を抽出
+        const completedDateMatch = t.filePath.match(/完了[/\\](\d{4}-\d{2}-\d{2})/);
+        if (completedDateMatch) {
+          const completedDate = new Date(completedDateMatch[1]);
+          completedDate.setHours(0, 0, 0, 0);
+          return completedDate >= weekStart && completedDate <= weekEnd;
         }
+
+        // フォールバック: dateフィールドを使用
+        if (t.date) {
+          const taskDate = new Date(t.date);
+          taskDate.setHours(0, 0, 0, 0);
+          return taskDate >= weekStart && taskDate <= weekEnd;
+        }
+
         return false;
       });
 
@@ -227,6 +266,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
 
   return (
     <div className="gtd-weekly-review">
+      {/* ヘッダー */}
       <div className="gtd-weekly-review__header">
         <div className="gtd-weekly-review__header-top">
           <ViewSwitcher
@@ -246,50 +286,57 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
             🔄
           </button>
         </div>
-        <p className="gtd-weekly-review__subtitle">
-          {t.weeklyReviewSubtitle}
-        </p>
       </div>
 
-      {/* 新規レビュー作成ボタン（最上部） */}
-      <div className="gtd-weekly-review__create-section">
-        <button
-          className="gtd-button gtd-button--primary gtd-button--large"
-          onClick={handleCreateReview}
-        >
-          {t.createNewReview}
-        </button>
-        <p className="gtd-weekly-review__create-hint">
-          今週の成果（完了{completedThisWeek.length}件、進行中{activeProjects.length}件）が自動で転記されます
-        </p>
-      </div>
+      {/* 新規レビュー作成ボタン（全幅） */}
+      <button
+        className="gtd-button gtd-button--primary gtd-weekly-review__create-button"
+        onClick={handleCreateReview}
+      >
+        {t.createNewReview}
+      </button>
 
-      {/* セクション選択タブ */}
+      {/* セクション選択タブ（アイコンのみ、1行） */}
       <div className="gtd-weekly-review__tabs">
         <button
-          className={`gtd-tab ${selectedSection === 'completed' ? 'gtd-tab--active' : ''}`}
+          className={`gtd-tab gtd-tab--icon ${selectedSection === 'completed' ? 'gtd-tab--active' : ''}`}
           onClick={() => setSelectedSection('completed')}
+          title={`${t.completedThisWeekTab} (${completedThisWeek.length})`}
         >
-          {t.completedThisWeekTab} ({completedThisWeek.length})
+          ✅
         </button>
         <button
-          className={`gtd-tab ${selectedSection === 'someday' ? 'gtd-tab--active' : ''}`}
+          className={`gtd-tab gtd-tab--icon ${selectedSection === 'someday' ? 'gtd-tab--active' : ''}`}
           onClick={() => setSelectedSection('someday')}
+          title={`${t.somedayTab} (${somedayTasks.length})`}
         >
-          {t.somedayTab} ({somedayTasks.length})
+          💭
         </button>
         <button
-          className={`gtd-tab ${selectedSection === 'waiting' ? 'gtd-tab--active' : ''}`}
+          className={`gtd-tab gtd-tab--icon ${selectedSection === 'waiting' ? 'gtd-tab--active' : ''}`}
           onClick={() => setSelectedSection('waiting')}
+          title={`${t.waitingTab} (${waitingTasks.length})`}
         >
-          {t.waitingTab} ({waitingTasks.length})
+          ⏳
         </button>
         <button
-          className={`gtd-tab ${selectedSection === 'projects' ? 'gtd-tab--active' : ''}`}
+          className={`gtd-tab gtd-tab--icon ${selectedSection === 'projects' ? 'gtd-tab--active' : ''}`}
           onClick={() => setSelectedSection('projects')}
+          title={`${t.activeProjectsTab} (${activeProjects.length})`}
         >
-          {t.activeProjectsTab} ({activeProjects.length})
+          🎯
         </button>
+      </div>
+
+      {/* 統計情報（1行） */}
+      <div className="gtd-weekly-review__stats">
+        <span className="gtd-weekly-review__stat-item">
+          {t.completedThisWeekTab}: <strong>{completedThisWeek.length}</strong>件
+        </span>
+        <span className="gtd-weekly-review__stat-separator">|</span>
+        <span className="gtd-weekly-review__stat-item">
+          {t.activeProjectsTab}: <strong>{activeProjects.length}</strong>件
+        </span>
       </div>
 
       {/* 今週完了したタスクセクション */}
