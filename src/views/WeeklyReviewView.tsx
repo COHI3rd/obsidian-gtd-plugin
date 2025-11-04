@@ -139,7 +139,10 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       console.error('Failed to load weekly review data:', error);
     } finally {
       if (!silent) {
-        setLoading(false);
+        // 0.5秒間はローディングを表示して、ユーザーに更新されたことを体感させる
+        setTimeout(() => {
+          setLoading(false);
+        }, 500);
       }
     }
   };

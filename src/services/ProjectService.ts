@@ -68,6 +68,7 @@ export class ProjectService {
     importance?: number;
     deadline?: Date;
     actionPlan?: string;
+    color?: string;
   }): Promise<Project> {
     const result = await ErrorHandler.tryCatch(async () => {
       // バリデーション
@@ -91,6 +92,7 @@ export class ProjectService {
         progress: 0,
         startedDate: null,
         completedDate: null,
+        color: data.color || '#6b7280', // デフォルトカラー: グレー
         filePath,
       });
 
@@ -238,6 +240,7 @@ export class ProjectService {
         progress: data.progress || 0,
         startedDate: data['started-date'] ? new Date(data['started-date']) : null,
         completedDate: data['completed-date'] ? new Date(data['completed-date']) : null,
+        color: data.color || '#6b7280',
         filePath,
       });
     } catch (error) {
@@ -345,6 +348,7 @@ export class ProjectService {
       progress: project.progress,
       'started-date': project.startedDate ? this.formatDate(project.startedDate) : undefined,
       'completed-date': project.completedDate ? this.formatDate(project.completedDate) : undefined,
+      color: project.color || '#6b7280',
     };
 
     // undefinedのプロパティを除去

@@ -67,6 +67,7 @@ export interface Project {
   progress: number;              // 0-100（自動計算）
   startedDate: Date | null;      // 開始日（in-progressになった日）
   completedDate: Date | null;    // 完了日（completedになった日）
+  color: string;                 // プロジェクトカラー（例: "#3b82f6"）
   filePath: string;
 
   // メソッド
@@ -123,6 +124,7 @@ export interface ProjectFrontmatter {
   progress?: number;
   'started-date'?: string | Date;
   'completed-date'?: string | Date;
+  color?: string;
 }
 
 /**

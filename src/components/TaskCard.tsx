@@ -12,6 +12,7 @@ interface TaskCardProps {
   compact?: boolean;
   showDateLabel?: boolean;
   showProject?: boolean;
+  projectColor?: string; // プロジェクトカラー（Todayグループ以外で使用）
 }
 
 /**
@@ -27,6 +28,8 @@ export const TaskCard: React.FC<TaskCardProps> = React.memo(({
   isDragging = false,
   compact = false,
   showDateLabel = false,
+  showProject = false,
+  projectColor,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState(false);
@@ -204,12 +207,15 @@ export const TaskCard: React.FC<TaskCardProps> = React.memo(({
     <>
       <div
         className={`gtd-task-card ${compact ? 'gtd-task-card--compact' : ''} ${
+          projectColor ? 'gtd-task-card--with-color' : ''
+        } ${
           task.completed ? 'gtd-task-card--completed' : ''
         }`}
         onClick={handleTitleClick}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        style={projectColor ? { borderLeft: `4px solid ${projectColor}` } : undefined}
       >
       {/* チェックボックス */}
       <div className="gtd-task-card__checkbox" onClick={handleCheckboxClick}>

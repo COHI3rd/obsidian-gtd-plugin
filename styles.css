@@ -819,6 +819,46 @@ div[style*="position: fixed"] .gtd-task-card {
   font-weight: 600;
 }
 
+/* プロジェクトカラーピッカー */
+.gtd-project-card__color-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 6px 0;
+}
+
+.gtd-project-card__color-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.gtd-project-card__color-palette {
+  display: flex;
+  gap: 6px;
+}
+
+.gtd-project-card__color-button {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.gtd-project-card__color-button:hover {
+  transform: scale(1.15);
+  border-color: var(--background-modifier-border);
+}
+
+.gtd-project-card__color-button--selected {
+  border-color: var(--interactive-accent);
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
 .gtd-project-card__progress {
   margin-bottom: 8px;
 }

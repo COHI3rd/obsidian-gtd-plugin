@@ -18,6 +18,7 @@ export class ProjectModel implements Project {
   progress: number;
   startedDate: Date | null;
   completedDate: Date | null;
+  color: string;
   filePath: string;
 
   constructor(data: Partial<Project>) {
@@ -30,6 +31,7 @@ export class ProjectModel implements Project {
     this.progress = data.progress || 0;
     this.startedDate = data.startedDate || null;
     this.completedDate = data.completedDate || null;
+    this.color = data.color || '#6b7280'; // デフォルト: グレー
     this.filePath = data.filePath || '';
   }
 

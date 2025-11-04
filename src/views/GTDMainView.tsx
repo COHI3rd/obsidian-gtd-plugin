@@ -48,31 +48,31 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         setLoading(true);
       }
       const allTasks = await taskService.getAllTasks();
+      const allProjects = await projectService.getAllProjects();
       setTasks(allTasks);
+      setProjects(allProjects);
     } catch (error) {
       console.error('Failed to load tasks:', error);
     } finally {
       if (!silent) {
-        setLoading(false);
+        // 0.5秒間はローディングを表示して、ユーザーに更新されたことを体感させる
+        setTimeout(() => {
+          setLoading(false);
+        }, 500);
       }
     }
   };
 
-  // プロジェクト一覧を読み込み（完了していないプロジェクトのみ）
-  const loadProjects = async () => {
-    try {
-      const allProjects = await projectService.getAllProjects();
-      // 完了していないプロジェクトのみをフィルタリング
-      const activeProjects = allProjects.filter(p => p.status !== 'completed');
-      setProjects(activeProjects);
-    } catch (error) {
-      console.error('Failed to load projects:', error);
-    }
-  };
+  // プロジェクト名からカラーを取得
+  const getProjectColor = useCallback((projectLink: string | null): string | undefined => {
+    if (!projectLink) return undefined;
+    const projectName = projectLink.replace(/\[\[|\]\]/g, '');
+    const project = projects.find(p => p.title === projectName);
+    return project?.color;
+  }, [projects]);
 
   useEffect(() => {
     loadTasks();
-    loadProjects();
 
     // リフレッシュ関数を親コンポーネントに渡す（サイレントモードで）
     if (onMounted) {
@@ -503,8 +503,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
             <button
               className="gtd-button gtd-button--icon"
               onClick={() => {
-                loadTasks(true); // サイレントリフレッシュ
-                loadProjects();
+                loadTasks(false); // ローディング表示ありでリフレッシュ
               }}
               title={t.refresh}
             >
@@ -513,7 +512,6 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
           </div>
           <div className="gtd-main-view__header-buttons">
             <button className="gtd-button gtd-button--primary" onClick={() => {
-              loadProjects(); // プロジェクトリストを最新化
               setIsModalOpen(true);
             }}>
               {t.addTask}
@@ -638,6 +636,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     onStatusChange={handleStatusChange}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
+                                    projectColor={getProjectColor(task.project)}
                                   />
                                 </div>
                               )}
@@ -690,6 +689,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     onStatusChange={handleStatusChange}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
+                                    projectColor={getProjectColor(task.project)}
                                   />
                                 </div>
                               )}
@@ -742,6 +742,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     onStatusChange={handleStatusChange}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
+                                    projectColor={getProjectColor(task.project)}
                                   />
                                 </div>
                               )}
@@ -794,6 +795,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     onStatusChange={handleStatusChange}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
+                                    projectColor={getProjectColor(task.project)}
                                   />
                                 </div>
                               )}

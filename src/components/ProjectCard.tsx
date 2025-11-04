@@ -9,6 +9,7 @@ interface ProjectCardProps {
   onClick?: (project: Project) => void;
   onStatusChange?: (project: Project, status: ProjectStatus) => void;
   onImportanceChange?: (project: Project, importance: number) => void;
+  onColorChange?: (project: Project, color: string) => void;
   onTaskClick?: (task: Task) => void;
   onTaskToggleComplete?: (task: Task) => void;
   onAddTask?: (project: Project) => void;
@@ -18,12 +19,25 @@ interface ProjectCardProps {
  * プロジェクトカードコンポーネント
  * プロジェクトの概要を表示
  */
+// デフォルトカラーパレット
+const COLOR_PALETTE = [
+  '#6b7280', // グレー
+  '#ef4444', // 赤
+  '#f97316', // オレンジ
+  '#eab308', // 黄色
+  '#22c55e', // 緑
+  '#3b82f6', // 青
+  '#8b5cf6', // 紫
+  '#ec4899', // ピンク
+];
+
 export const ProjectCard: React.FC<ProjectCardProps> = ({
   project,
   tasks = [],
   onClick,
   onStatusChange,
   onImportanceChange,
+  onColorChange,
   onTaskClick,
   onTaskToggleComplete,
   onAddTask
@@ -71,6 +85,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     e.stopPropagation();
     if (onImportanceChange) {
       onImportanceChange(project, parseInt(e.target.value));
+    }
+  };
+
+  const handleColorChange = (color: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onColorChange) {
+      onColorChange(project, color);
     }
   };
 
@@ -156,6 +177,26 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           </button>
         )}
       </div>
+
+      {/* カラーピッカー */}
+      {onColorChange && (
+        <div className="gtd-project-card__color-picker" onClick={(e) => e.stopPropagation()}>
+          <span className="gtd-project-card__color-label">カラー:</span>
+          <div className="gtd-project-card__color-palette">
+            {COLOR_PALETTE.map((color) => (
+              <button
+                key={color}
+                className={`gtd-project-card__color-button ${
+                  project.color === color ? 'gtd-project-card__color-button--selected' : ''
+                }`}
+                style={{ backgroundColor: color }}
+                onClick={(e) => handleColorChange(color, e)}
+                title={color}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 進捗バー */}
       <div className="gtd-project-card__progress">

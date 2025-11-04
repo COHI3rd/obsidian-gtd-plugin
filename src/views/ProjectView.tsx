@@ -69,7 +69,10 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
       console.error('Failed to load projects:', error);
     } finally {
       if (!silent) {
-        setLoading(false);
+        // 0.5秒間はローディングを表示して、ユーザーに更新されたことを体感させる
+        setTimeout(() => {
+          setLoading(false);
+        }, 500);
       }
     }
   };
@@ -190,6 +193,17 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
       await loadData(true);
     } catch (error) {
       console.error('Failed to update project importance:', error);
+    }
+  };
+
+  // プロジェクトのカラーを変更
+  const handleColorChange = async (project: Project, newColor: string) => {
+    try {
+      const updatedProject = { ...project, color: newColor };
+      await projectService.updateProject(updatedProject as Project);
+      await loadData(true);
+    } catch (error) {
+      console.error('Failed to update project color:', error);
     }
   };
 
@@ -354,6 +368,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                         onClick={() => openProject(project)}
                         onStatusChange={handleStatusChange}
                         onImportanceChange={handleImportanceChange}
+                        onColorChange={handleColorChange}
                         onTaskClick={(task) => fileService.openFile(task.filePath)}
                         onTaskToggleComplete={handleTaskToggleComplete}
                         onAddTask={handleAddTask}
@@ -396,6 +411,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
                           onClick={() => openProject(project)}
                           onStatusChange={handleStatusChange}
                           onImportanceChange={handleImportanceChange}
+                          onColorChange={handleColorChange}
                           onTaskClick={(task) => fileService.openFile(task.filePath)}
                           onTaskToggleComplete={handleTaskToggleComplete}
                           onAddTask={handleAddTask}
