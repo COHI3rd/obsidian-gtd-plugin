@@ -17,6 +17,11 @@
 8. [テスト方針](#テスト方針)
 9. [ドキュメント更新ルール](#ドキュメント更新ルール)
 10. [トラブルシューティング](#トラブルシューティング)
+11. [開発フロー（推奨）](#開発フロー推奨)
+12. [連絡・相談](#連絡相談)
+13. [リポジトリ管理とリリースフロー](#リポジトリ管理とリリースフロー)
+14. [トラブルシューティング（リリース関連）](#トラブルシューティングリリース関連)
+15. [Obsidian公式プラグインガイドライン遵守](#obsidian公式プラグインガイドライン遵守)
 
 ---
 
@@ -915,7 +920,204 @@ git push public 1.1.1
 
 ---
 
-## 14. トラブルシューティング（リリース関連）
+## 14. Obsidian公式プラグイン申請時の必須ルール
+
+このセクションは、Obsidian公式のチェックボットによる自動バリデーションを通過するための必須ルールをまとめたものです。
+これらのルールに違反すると、PRが自動的に却下されます。
+
+### 14.1 manifest.json の必須ルール
+
+#### ❌ 禁止事項
+1. **IDに"obsidian"という単語を含めない**
+   ```json
+   // ❌ BAD
+   {
+     "id": "obsidian-gtd-plugin"
+   }
+
+   // ✅ GOOD
+   {
+     "id": "gtd-task-manager"
+   }
+   ```
+
+2. **descriptionの最後に句読点を必ず付ける**
+   ```json
+   // ❌ BAD
+   {
+     "description": "GTD task management plugin"
+   }
+
+   // ✅ GOOD
+   {
+     "description": "GTD task management plugin with Notion-style drag & drop UI."
+   }
+   ```
+   - 使用可能な句読点: `.` `!` `?`
+   - 日本語の場合: `。` `！` `？`
+
+3. **バージョン番号の形式**
+   ```json
+   // ✅ GOOD
+   {
+     "version": "1.0.0"
+   }
+   ```
+   - セマンティックバージョニングを使用（MAJOR.MINOR.PATCH）
+   - プレフィックス（`v`など）は不要
+
+### 14.2 community-plugins.json の必須ルール
+
+#### ✅ 正しい形式
+```json
+{
+  "id": "gtd-task-manager",
+  "name": "GTD Task Manager",
+  "author": "COHI",
+  "description": "GTD (Getting Things Done) task management plugin with Notion-style drag & drop UI for seamless workflow.",
+  "repo": "COHI3rd/obsidian-gtd-plugin"
+}
+```
+
+#### 重要事項
+- `id` は manifest.json の id と**完全一致**させる
+- `description` の最後に句読点を付ける
+- `repo` は `ユーザー名/リポジトリ名` の形式（`https://`不要）
+
+### 14.3 Pull Request テンプレートの必須ルール
+
+#### チェックボックスの正しい書き方
+```markdown
+// ✅ GOOD - チェック済み
+- [x] チェック項目
+
+// ✅ GOOD - 未チェック
+- [ ] チェック項目
+
+// ❌ BAD - スペースの数が間違っている
+- [  x  ] チェック項目
+- [] チェック項目
+```
+
+**重要**:
+- チェック済み: `[x]` （xの前後にスペース**無し**）
+- 未チェック: `[ ]` （スペース**1つ**）
+
+#### インデントの正しい書き方
+```markdown
+// ✅ GOOD - 2スペース
+- [x] 親項目
+  - [x] 子項目
+    - [x] 孫項目
+
+// ❌ BAD - 4スペースやタブ
+- [x] 親項目
+    - [x] 子項目（4スペース）
+	- [x] 子項目（タブ）
+```
+
+**重要**: インデントは**必ず2スペース**
+
+#### コメントの削除
+```markdown
+// ❌ BAD - コメントを残したまま
+<!--- This is a comment --->
+- [x] チェック項目
+
+// ✅ GOOD - コメントを削除
+- [x] チェック項目
+```
+
+### 14.4 GitHub Release の必須ルール
+
+#### 必須ファイル（3つ）
+1. **main.js** - ビルド済みプラグインファイル
+2. **manifest.json** - プラグインのメタデータ
+3. **styles.css** - スタイルシート（オプションだが推奨）
+
+#### Release名の形式
+```
+// ✅ GOOD
+1.0.0
+
+// ❌ BAD - vプレフィックスは不要
+v1.0.0
+```
+
+**重要**: Release名は manifest.json の version と**完全一致**させる
+
+### 14.5 バリデーションエラーへの対応手順
+
+#### エラーが出た場合の修正フロー
+1. **エラーメッセージを確認**
+   - PRのコメント欄にボットがエラーを投稿
+   - エラー内容を正確に把握
+
+2. **該当箇所を修正**
+   - manifest.json の修正が必要な場合は再ビルド
+   - community-plugins.json の修正
+   - PRテンプレートの修正
+
+3. **コミット＆プッシュ**
+   ```bash
+   git add .
+   git commit -m "fix: チェックボット指摘事項の修正"
+   git push origin master
+   ```
+
+4. **PRは自動更新される**
+   - 新しいPRを作成しない
+   - 既存のPRが自動的に更新される
+   - ボットが再度バリデーションを実行
+
+### 14.6 事前チェックリスト
+
+PRを作成する前に、必ず以下を確認してください。
+
+#### manifest.json チェック
+- [ ] `id` に "obsidian" という単語が含まれていない
+- [ ] `description` の最後に句読点（`.` `!` `?`）がある
+- [ ] `version` がセマンティックバージョニング形式（例: 1.0.0）
+- [ ] `minAppVersion` が適切に設定されている
+
+#### community-plugins.json チェック
+- [ ] `id` が manifest.json の id と完全一致
+- [ ] `description` の最後に句読点がある
+- [ ] `repo` が `ユーザー名/リポジトリ名` 形式
+
+#### GitHub Release チェック
+- [ ] Release名が manifest.json の version と完全一致
+- [ ] main.js がアップロードされている
+- [ ] manifest.json がアップロードされている
+- [ ] styles.css がアップロードされている（オプション）
+
+#### PR テンプレート チェック
+- [ ] チェックボックスの形式が正しい（`[x]` または `[ ]`）
+- [ ] インデントが2スペース
+- [ ] コメント（`<!--- ... --->`）をすべて削除
+- [ ] リポジトリURLが正しい
+- [ ] すべての必須項目にチェックを入れている
+
+### 14.7 よくあるエラー一覧と対処法
+
+| エラーメッセージ | 原因 | 対処法 |
+|---------------|------|--------|
+| "You did not follow the pull request template" | チェックボックスやインデントの形式が間違っている | `- [x]` `- [ ]` の形式を厳守、インデントは2スペース |
+| "Don't use the word obsidian in plugin ID" | manifest.json の id に "obsidian" が含まれている | id を変更して再ビルド |
+| "Description needs to have one of the following characters at the end" | description の最後に句読点がない | manifest.json と community-plugins.json の description に `.` を追加 |
+| "Release name doesn't match version" | Release名と manifest.json の version が一致しない | Release名を修正（vプレフィックス不要） |
+| "Missing required files" | main.js, manifest.json がない | Releaseページで不足ファイルをアップロード |
+| "ID mismatch" | manifest.json と community-plugins.json の id が一致しない | どちらかの id を修正して一致させる |
+
+### 14.8 参考リンク
+
+- [Obsidian Developer Policies](https://docs.obsidian.md/Developer+policies)
+- [Plugin Guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines)
+- [obsidian-releases リポジトリ](https://github.com/obsidianmd/obsidian-releases)
+
+---
+
+## 15. トラブルシューティング（リリース関連）
 
 ### 問題: PRで自動チェックエラーが出る
 
@@ -966,5 +1168,221 @@ git push public master --force
 
 ---
 
+## 16. Obsidian公式プラグインガイドライン遵守
+
+このセクションでは、Obsidian公式のプラグインレビューで指摘される一般的な問題と、それを回避するためのベストプラクティスを記載します。
+
+### 16.1 必須事項（Required）
+
+#### ❌ onunloadでビューをdetachしない
+
+**禁止事項**:
+```typescript
+// ❌ 間違い - アンチパターン
+async onunload(): Promise<void> {
+  this.app.workspace.detachLeavesOfType(VIEW_TYPE_GTD);
+  this.app.workspace.detachLeavesOfType(VIEW_TYPE_WEEKLY_REVIEW);
+  this.app.workspace.detachLeavesOfType(VIEW_TYPE_PROJECT);
+}
+```
+
+**正しい実装**:
+```typescript
+// ✅ 正しい
+async onunload(): Promise<void> {
+  // Obsidianが自動的にビューをクリーンアップするため、
+  // 手動でdetachLeavesOfTypeを呼ぶ必要はない
+}
+```
+
+**理由**:
+- Obsidianは自動的にビューのクリーンアップを行う
+- 手動でdetachするとユーザーが開いているビューが強制的に閉じられる
+- プラグインアンロード時のユーザー体験を損なう
+
+**参考**: [Plugin guidelines - Don't detach leaves in onunload](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines#Don't+detach+leaves+in+%60onunload%60)
+
+---
+
+#### ❌ console.logの乱用を避ける
+
+**禁止事項**:
+```typescript
+// ❌ 間違い - 開発用ログが残っている
+async loadTasks(): Promise<void> {
+  console.log('Loading tasks...');
+  const tasks = await this.taskService.getAllTasks();
+  console.log('Tasks loaded:', tasks.length);
+  console.log('Tasks:', tasks);
+  return tasks;
+}
+```
+
+**正しい実装**:
+```typescript
+// ✅ 正しい - エラーログのみ
+async loadTasks(): Promise<void> {
+  try {
+    const tasks = await this.taskService.getAllTasks();
+    return tasks;
+  } catch (error) {
+    console.error('Failed to load tasks:', error); // エラーのみ
+    throw error;
+  }
+}
+```
+
+**ルール**:
+- **公開版**: `console.log`は全削除、`console.error`のみ許可
+- **開発版**: 開発に必要なデバッグログは残してOK（ただし最小限に）
+- **許可されるログ**:
+  - `console.error()`: エラー情報
+  - `console.warn()`: 警告情報
+- **禁止されるログ**:
+  - `console.log()`: デバッグ情報
+  - `console.info()`: 一般情報
+  - `console.debug()`: デバッグ情報
+
+**理由**:
+- ユーザーの開発者コンソールを汚染する
+- パフォーマンスに影響する可能性がある
+- 本番環境では不要な情報
+
+---
+
+### 15.2 推奨事項（Optional）
+
+#### 🔶 ファイル削除はfileManager.trashFileを使用
+
+**非推奨**:
+```typescript
+// 🔶 非推奨 - ユーザー設定を無視
+await this.app.vault.delete(file);
+```
+
+**推奨**:
+```typescript
+// ✅ 推奨 - ユーザー設定に従う
+await this.app.fileManager.trashFile(file);
+```
+
+**理由**:
+- `vault.delete()`: ファイルを完全削除（復元不可）
+- `fileManager.trashFile()`: ユーザーの設定に従う
+  - 設定で「ゴミ箱に移動」→ `.trash/` フォルダに移動
+  - 設定で「完全削除」→ 完全削除
+  - 設定で「システムのゴミ箱」→ OSのゴミ箱に移動
+
+**ユーザー体験**: ユーザーが意図しない完全削除を防ぐ
+
+---
+
+#### 🔶 anyキャストを避ける
+
+**非推奨**:
+```typescript
+// 🔶 非推奨 - 型安全性を損なう
+taskModel.setDate(null as any);
+```
+
+**推奨**:
+```typescript
+// ✅ 推奨 - 型定義を修正
+// Task.ts
+setDate(date: Date | null): void {
+  this.date = date;
+}
+
+// 使用時
+taskModel.setDate(null);
+```
+
+**理由**:
+- `as any`は型チェックを無効化する
+- バグの原因になりやすい
+- 型定義を正しく修正すべき
+
+---
+
+### 15.3 公開前チェックリスト
+
+公開版リポジトリにプッシュする前に、必ず以下をチェック：
+
+- [ ] `onunload()`で`detachLeavesOfType`を呼んでいない
+- [ ] `console.log`がコード内に残っていない（`console.error`のみOK）
+- [ ] `vault.delete()`を使わず`fileManager.trashFile()`を使用
+- [ ] `as any`キャストを使用していない
+- [ ] ビルドが成功する（`npm run build`）
+- [ ] TypeScriptエラーがない（`tsc -noEmit -skipLibCheck`）
+- [ ] manifest.jsonのバージョンが正しい
+- [ ] versions.jsonが更新されている
+
+---
+
+### 15.4 開発版 vs 公開版の違い
+
+| 項目 | 開発版（obsidian_gtd） | 公開版（obsidian-gtd-plugin） |
+|------|----------------------|----------------------------|
+| **console.log** | 開発に必要なデバッグログはOK | 全削除（console.errorのみ） |
+| **onunload** | detachしない | detachしない |
+| **vault.delete** | trashFile推奨 | trashFile必須 |
+| **anyキャスト** | 避けるべき | 絶対に避ける |
+| **コメント** | 日本語OK、詳細でもOK | 簡潔に、必要最小限 |
+
+---
+
+### 15.5 レビューボットの自動チェック
+
+Obsidian公式のレビューボット（ObsidianReviewBot）は以下をチェックします：
+
+1. **必須チェック（Required）**:
+   - `onunload`で`detachLeavesOfType`を呼んでいないか
+   - `console.log`が多すぎないか（目安: 5箇所以内）
+   - その他のアンチパターン
+
+2. **推奨チェック（Optional）**:
+   - `vault.delete()`の使用
+   - `as any`の使用
+   - その他のベストプラクティス
+
+3. **GitHub Releaseの確認**:
+   - 必須ファイルが含まれているか
+     - `main.js`
+     - `manifest.json`
+     - `styles.css`（使用している場合）
+   - バージョン番号がmanifest.jsonと一致しているか
+
+---
+
+### 15.6 レビュー指摘への対応フロー
+
+1. **レビューボットから指摘を受けた場合**:
+   - PRのコメントを確認
+   - 指摘された箇所を修正
+   - コミット & プッシュ
+   - GitHub Releaseを更新（必要な場合）
+   - **新しいPRを作らない**（既存のPRが自動更新される）
+   - 6時間以内に再チェックが実行される
+
+2. **人間のレビュアーから指摘を受けた場合**:
+   - PRのコメントで質問や要望を確認
+   - 必要に応じて修正
+   - コメントで返信
+   - 修正をプッシュ
+
+3. **不明な指摘がある場合**:
+   - PRのコメントで質問
+   - `/skip` コマンドで理由を説明（誤検知の場合）
+
+---
+
+### 15.7 参考リンク
+
+- [Plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines)
+- [Developer policies](https://docs.obsidian.md/Developer+policies)
+- [Submit your plugin](https://docs.obsidian.md/Plugins/Releasing/Submit+your+plugin)
+
+---
+
 *このガイドラインは開発の進行に応じて随時更新されます。*
-*最終更新: 2025-01-31*
+*最終更新: 2025-11-04*
