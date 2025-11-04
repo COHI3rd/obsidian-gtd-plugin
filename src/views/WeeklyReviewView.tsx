@@ -189,13 +189,26 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
         activeProjectsCount: activeProjects.length,
       });
 
-      // レビューファイルを左ペインで開く
+      // レビューファイルを開く
       const file = fileService.getApp().vault.getAbstractFileByPath(review.filePath);
       if (file) {
-        // 新しいLeafを左側に作成して開く
-        const leaf = fileService.getApp().workspace.getLeaf('split', 'vertical');
-        await leaf.openFile(file as any);
-        new Notice(t.reviewCreatedAndOpened);
+        const workspace = fileService.getApp().workspace;
+
+        // 既にファイルが開いているかチェック
+        const existingLeaf = workspace.getLeavesOfType('markdown').find(
+          leaf => (leaf.view as any).file?.path === review.filePath
+        );
+
+        if (existingLeaf) {
+          // 既に開いている場合はそのタブに移動
+          workspace.setActiveLeaf(existingLeaf, { focus: true });
+          new Notice(t.reviewCreatedAndOpened);
+        } else {
+          // 開いていない場合は左ペインで新しく開く
+          const leaf = workspace.getLeaf('split', 'vertical');
+          await leaf.openFile(file as any);
+          new Notice(t.reviewCreatedAndOpened);
+        }
       }
     } catch (error) {
       console.error('Failed to create review:', error);
