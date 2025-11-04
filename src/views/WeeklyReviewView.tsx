@@ -180,23 +180,14 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
     }
   };
 
-  // 新規レビューを作成
+  // 新規レビューを作成または既存レビューの統計を更新
   const handleCreateReview = async () => {
     try {
-      // 既存レビューチェック
-      const hasReview = await weeklyReviewService.hasReviewForCurrentWeek();
-      if (hasReview) {
-        new Notice(t.reviewAlreadyExists);
-        return;
-      }
-
-      // レビュー作成（統計情報のみ）
+      // レビュー作成または更新（統計情報を自動更新）
       const review = await weeklyReviewService.createWeeklyReview(new Date(), {
         completedTasksCount: completedThisWeek.length,
         activeProjectsCount: activeProjects.length,
       });
-
-      new Notice(t.reviewCreatedAndOpened);
 
       // レビューファイルを左ペインで開く
       const file = fileService.getApp().vault.getAbstractFileByPath(review.filePath);
@@ -204,6 +195,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
         // 新しいLeafを左側に作成して開く
         const leaf = fileService.getApp().workspace.getLeaf('split', 'vertical');
         await leaf.openFile(file as any);
+        new Notice(t.reviewCreatedAndOpened);
       }
     } catch (error) {
       console.error('Failed to create review:', error);
@@ -242,6 +234,19 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
         </div>
         <p className="gtd-weekly-review__subtitle">
           {t.weeklyReviewSubtitle}
+        </p>
+      </div>
+
+      {/* 新規レビュー作成ボタン（最上部） */}
+      <div className="gtd-weekly-review__create-section">
+        <button
+          className="gtd-button gtd-button--primary gtd-button--large"
+          onClick={handleCreateReview}
+        >
+          {t.createNewReview}
+        </button>
+        <p className="gtd-weekly-review__create-hint">
+          今週の成果（完了{completedThisWeek.length}件、進行中{activeProjects.length}件）が自動で転記されます
         </p>
       </div>
 
@@ -492,25 +497,6 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
           )}
         </div>
       )}
-
-      {/* 新規レビュー作成セクション */}
-      <div className="gtd-weekly-review__section">
-        <div className="gtd-weekly-review__section-header">
-          <h3>{t.createNewReview}</h3>
-          <p className="gtd-weekly-review__hint">
-            レビューファイルを作成して、Obsidianエディタで自由に編集できます。<br />
-            今週の成果（完了タスク{completedThisWeek.length}件、進行中プロジェクト{activeProjects.length}件）が自動で転記されます。
-          </p>
-        </div>
-
-        <button
-          className="gtd-button gtd-button--primary"
-          onClick={handleCreateReview}
-          style={{ width: '100%', padding: '16px', fontSize: '16px' }}
-        >
-          {t.createNewReview}
-        </button>
-      </div>
 
       {/* 週次レビューのヒント */}
       <div className="gtd-weekly-review__tips">

@@ -133,9 +133,9 @@ export class ProjectService {
 
       // 完了日を取得（今日）
       const completedDate = project.completedDate || new Date();
-      const dateStr = this.formatDate(completedDate);
+      const dateStr = this.formatYearMonth(completedDate);
 
-      // 完了フォルダのパス: 完了/YYYY-MM-DD/
+      // 完了フォルダのパス: 完了/YYYY-MM/
       const completedFolder = `完了/${dateStr}`;
 
       // フォルダを作成（存在しない場合）
@@ -169,6 +169,15 @@ export class ProjectService {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  /**
+   * 日付を YYYY-MM 形式にフォーマット
+   */
+  private formatYearMonth(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
   }
 
   /**

@@ -38,7 +38,8 @@ export class WeeklyReviewService {
   }
 
   /**
-   * 週次レビューファイルを作成
+   * 週次レビューファイルを作成または更新
+   * 既存のレビューがある場合は統計データのみを更新
    */
   async createWeeklyReview(
     date: Date,
@@ -53,21 +54,32 @@ export class WeeklyReviewService {
   ): Promise<WeeklyReview> {
     await this.ensureReviewFolder();
 
-    // ファイル名: YYYY-MM-DD-weekly-review.md
-    const dateStr = this.formatDate(date);
+    // 週開始日を取得してファイル名を生成
+    const tempReview = new WeeklyReview({
+      id: 'temp',
+      date,
+      filePath: '',
+      weekStartDay: this.weekStartDay,
+    });
+    const weekStart = tempReview.getWeekStart();
+    const dateStr = this.formatDate(weekStart);
     const fileName = `${dateStr}-weekly-review.md`;
     const filePath = `${this.reviewFolder}/${fileName}`;
 
     // 既存ファイルチェック
     const existingFile = this.app.vault.getAbstractFileByPath(filePath);
-    if (existingFile) {
-      throw new Error(`Review file already exists: ${filePath}`);
+    if (existingFile instanceof TFile) {
+      // 既存レビューがある場合は統計データのみを更新
+      return await this.updateReviewStatistics(existingFile, {
+        completedTasksCount: options.completedTasksCount || 0,
+        activeProjectsCount: options.activeProjectsCount || 0,
+      });
     }
 
     // レビューオブジェクトを作成
     const review = new WeeklyReview({
       id: `review-${Date.now()}`,
-      date,
+      date: weekStart, // 週開始日を使用
       filePath,
       completedTasksCount: options.completedTasksCount || 0,
       activeProjectsCount: options.activeProjectsCount || 0,
@@ -85,6 +97,35 @@ export class WeeklyReviewService {
     await this.app.vault.create(filePath, content);
 
     return review;
+  }
+
+  /**
+   * 既存レビューの統計データのみを更新
+   */
+  private async updateReviewStatistics(
+    file: TFile,
+    stats: {
+      completedTasksCount: number;
+      activeProjectsCount: number;
+    }
+  ): Promise<WeeklyReview> {
+    const content = await this.app.vault.read(file);
+
+    // 統計データを更新
+    const updatedContent = content
+      .replace(
+        /- \*\*完了タスク\*\*: \d+件/,
+        `- **完了タスク**: ${stats.completedTasksCount}件`
+      )
+      .replace(
+        /- \*\*進行中プロジェクト\*\*: \d+件/,
+        `- **進行中プロジェクト**: ${stats.activeProjectsCount}件`
+      );
+
+    await this.app.vault.modify(file, updatedContent);
+
+    // 更新されたレビューを返す
+    return (await this.parseReviewFile(file))!;
   }
 
   /**
@@ -161,10 +202,18 @@ ${review.notes || '_その他のメモがあれば記入してください_'}
   }
 
   /**
-   * 指定日付のレビューを取得
+   * 指定日付のレビューを取得（週開始日ベース）
    */
   async getReviewByDate(date: Date): Promise<WeeklyReview | null> {
-    const dateStr = this.formatDate(date);
+    // 週開始日を計算
+    const tempReview = new WeeklyReview({
+      id: 'temp',
+      date,
+      filePath: '',
+      weekStartDay: this.weekStartDay,
+    });
+    const weekStart = tempReview.getWeekStart();
+    const dateStr = this.formatDate(weekStart);
     const fileName = `${dateStr}-weekly-review.md`;
     const filePath = `${this.reviewFolder}/${fileName}`;
 
