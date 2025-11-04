@@ -21,6 +21,11 @@ interface GTDMainViewProps {
   onTaskUpdated?: () => void;
 }
 
+// ドラッグのタイムスタンプを保存するグローバル変数
+let lastDragStartTime = 0;
+let lastDragEndTime = 0;
+let isDraggingNow = false;
+
 /**
  * GTDメインビューコンポーネント
  * 2カラムレイアウトでInbox/Today/次に取るべき行動を表示
@@ -173,6 +178,10 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
 
   // ドラッグ開始時の補正（即座に実行）
   const handleDragStart = (result: any) => {
+    // ドラッグ開始のタイムスタンプを記録（クリック判定用）
+    lastDragStartTime = Date.now();
+    isDraggingNow = true;
+
     // Container のオフセットを保存
     const container = document.querySelector('.gtd-main-view');
     if (!container) return;
@@ -249,6 +258,10 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
   // ドラッグ&ドロップ処理（完全な楽観的更新）
   const handleDragEnd = async (result: DropResult) => {
     const { source, destination, draggableId } = result;
+
+    // ドラッグ終了のタイムスタンプを記録（クリック判定用）
+    lastDragEndTime = Date.now();
+    isDraggingNow = false;
 
     // プレースホルダーの非表示クラスを削除（クリーンアップ）
     const placeholder = document.querySelector(`[data-rbd-draggable-id="${draggableId}"]`) as HTMLElement;
@@ -429,6 +442,20 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
 
   // タスクファイルを開く
   const handleOpenTask = async (task: Task) => {
+    const currentTime = Date.now();
+    const timeSinceLastDragStart = currentTime - lastDragStartTime;
+    const timeSinceLastDragEnd = currentTime - lastDragEndTime;
+
+    // ドラッグ中、またはドラッグ開始から2秒以内のクリックは無視
+    if (isDraggingNow || timeSinceLastDragStart < 2000) {
+      return;
+    }
+
+    // ドラッグ終了直後（300ms以内）のクリックも無視
+    if (timeSinceLastDragEnd < 300) {
+      return;
+    }
+
     try {
       await fileService.openFile(task.filePath);
     } catch (error) {

@@ -47,6 +47,9 @@ export const TaskCard: React.FC<TaskCardProps> = React.memo(({
 
   const handleTitleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+
+    // クリック操作の場合のみファイルを開く
+    // （ドラッグ判定はGTDMainView.tsxのhandleOpenTaskで行う）
     if (onOpenTask) {
       onOpenTask(task);
     }
