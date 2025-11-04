@@ -1,6 +1,6 @@
 import { App, PluginSettingTab, Setting } from 'obsidian';
 import type GTDPlugin from './main';
-import { GTDSettings } from './types';
+import { GTDSettings, TaskPriority } from './types';
 import { getText } from './i18n';
 
 /**
@@ -38,7 +38,7 @@ export class GTDSettingTab extends PluginSettingTab {
 
     const t = getText(this.plugin.settings.language);
 
-    containerEl.createEl('h2', { text: t.settingsTitle });
+    new Setting(containerEl).setName(t.settingsTitle).setHeading();
 
     // 言語設定
     new Setting(containerEl)
@@ -51,8 +51,8 @@ export class GTDSettingTab extends PluginSettingTab {
             en: 'English',
           })
           .setValue(this.plugin.settings.language)
-          .onChange(async (value: any) => {
-            this.plugin.settings.language = value;
+          .onChange(async (value: string) => {
+            this.plugin.settings.language = value as 'ja' | 'en';
             await this.plugin.saveSettings();
             // すべてのビューを再レンダリング（言語変更を反映）
             this.plugin.rerenderAllViews();
@@ -159,8 +159,8 @@ export class GTDSettingTab extends PluginSettingTab {
             high: t.priorityHigh,
           })
           .setValue(this.plugin.settings.defaultPriority)
-          .onChange(async (value: any) => {
-            this.plugin.settings.defaultPriority = value;
+          .onChange(async (value: string) => {
+            this.plugin.settings.defaultPriority = value as TaskPriority;
             await this.plugin.saveSettings();
           })
       );
@@ -176,14 +176,14 @@ export class GTDSettingTab extends PluginSettingTab {
             auto: t.taskSortModeAuto,
           })
           .setValue(this.plugin.settings.taskSortMode)
-          .onChange(async (value: any) => {
-            this.plugin.settings.taskSortMode = value;
+          .onChange(async (value: string) => {
+            this.plugin.settings.taskSortMode = value as 'manual' | 'auto';
             await this.plugin.saveSettings();
           })
       );
 
     // デイリーノート連携
-    containerEl.createEl('h3', { text: t.dailyNoteIntegration });
+    new Setting(containerEl).setName(t.dailyNoteIntegration).setHeading();
 
     new Setting(containerEl)
       .setName(t.dailyNoteMode)
@@ -197,8 +197,8 @@ export class GTDSettingTab extends PluginSettingTab {
             command: t.dailyNoteModeCommand,
           })
           .setValue(this.plugin.settings.dailyNoteMode)
-          .onChange(async (value: any) => {
-            this.plugin.settings.dailyNoteMode = value;
+          .onChange(async (value: string) => {
+            this.plugin.settings.dailyNoteMode = value as 'none' | 'auto-write' | 'dataview' | 'command';
             await this.plugin.saveSettings();
           })
       );
@@ -230,7 +230,7 @@ export class GTDSettingTab extends PluginSettingTab {
       );
 
     // 使い方
-    containerEl.createEl('h3', { text: t.usage });
+    new Setting(containerEl).setName(t.usage).setHeading();
     containerEl.createEl('p', {
       text: t.usageStep1,
     });

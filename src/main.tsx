@@ -114,11 +114,11 @@ class GTDView extends ItemView {
     };
 
     // ビュー切り替えハンドラ
-    const handleViewChange = async (view: string) => {
+    const handleViewChange = (view: string) => {
       if (view === 'weekly-review') {
-        await this.plugin.activateWeeklyReviewView();
+        void this.plugin.activateWeeklyReviewView();
       } else if (view === 'project') {
-        await this.plugin.activateProjectView();
+        void this.plugin.activateProjectView();
       }
       // 'main' の場合は何もしない（既に表示中）
     };
@@ -135,7 +135,7 @@ class GTDView extends ItemView {
           onMounted={(refreshFn) => this.setRefreshCallback(refreshFn)}
           onInsertToDailyNote={handleInsertToDailyNote}
           onViewChange={handleViewChange}
-          onTaskUpdated={() => this.plugin.refreshAllViews()}
+          onTaskUpdated={() => void this.plugin.refreshAllViews()}
         />
       </React.StrictMode>
     );
@@ -225,11 +225,11 @@ class WeeklyReviewViewLeaf extends ItemView {
     container.empty();
 
     // ビュー切り替えハンドラ
-    const handleViewChange = async (view: string) => {
+    const handleViewChange = (view: string) => {
       if (view === 'main') {
-        await this.plugin.activateView();
+        void this.plugin.activateView();
       } else if (view === 'project') {
-        await this.plugin.activateProjectView();
+        void this.plugin.activateProjectView();
       }
       // 'weekly-review' の場合は何もしない（既に表示中）
     };
@@ -252,7 +252,7 @@ class WeeklyReviewViewLeaf extends ItemView {
           onMounted={(refreshFn) => {
             this.refreshFn = refreshFn;
           }}
-          onTaskUpdated={() => this.plugin.refreshAllViews()}
+          onTaskUpdated={() => void this.plugin.refreshAllViews()}
         />
       </React.StrictMode>
     );
@@ -341,11 +341,11 @@ class ProjectViewLeaf extends ItemView {
     container.empty();
 
     // ビュー切り替えハンドラ
-    const handleViewChange = async (view: string) => {
+    const handleViewChange = (view: string) => {
       if (view === 'main') {
-        await this.plugin.activateView();
+        void this.plugin.activateView();
       } else if (view === 'weekly-review') {
-        await this.plugin.activateWeeklyReviewView();
+        void this.plugin.activateWeeklyReviewView();
       }
       // 'project' の場合は何もしない（既に表示中）
     };
@@ -363,7 +363,7 @@ class ProjectViewLeaf extends ItemView {
           onMounted={(refreshFn) => {
             this.refreshFn = refreshFn;
           }}
-          onTaskUpdated={() => this.plugin.refreshAllViews()}
+          onTaskUpdated={() => void this.plugin.refreshAllViews()}
         />
       </React.StrictMode>
     );
