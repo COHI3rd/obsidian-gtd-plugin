@@ -44,6 +44,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 }) => {
   // デフォルトは閉じた状態（false）
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
   const getStatusLabel = () => {
     switch (project.status) {
       case 'not-started':
@@ -180,21 +181,40 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
 
       {/* カラーピッカー */}
       {onColorChange && (
-        <div className="gtd-project-card__color-picker" onClick={(e) => e.stopPropagation()}>
-          <span className="gtd-project-card__color-label">カラー:</span>
-          <div className="gtd-project-card__color-palette">
-            {COLOR_PALETTE.map((color) => (
-              <button
-                key={color}
-                className={`gtd-project-card__color-button ${
-                  project.color === color ? 'gtd-project-card__color-button--selected' : ''
-                }`}
-                style={{ backgroundColor: color }}
-                onClick={(e) => handleColorChange(color, e)}
-                title={color}
+        <div className="gtd-project-card__color-section" onClick={(e) => e.stopPropagation()}>
+          <button
+            className="gtd-project-card__color-header"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsColorPickerOpen(!isColorPickerOpen);
+            }}
+          >
+            <span className="gtd-project-card__color-label">カラー</span>
+            <div className="gtd-project-card__color-preview">
+              <div
+                className="gtd-project-card__color-preview-dot"
+                style={{ backgroundColor: project.color }}
               />
-            ))}
-          </div>
+              <span className="gtd-project-card__color-toggle">
+                {isColorPickerOpen ? '▼' : '▶'}
+              </span>
+            </div>
+          </button>
+          {isColorPickerOpen && (
+            <div className="gtd-project-card__color-palette">
+              {COLOR_PALETTE.map((color) => (
+                <button
+                  key={color}
+                  className={`gtd-project-card__color-button ${
+                    project.color === color ? 'gtd-project-card__color-button--selected' : ''
+                  }`}
+                  style={{ backgroundColor: color }}
+                  onClick={(e) => handleColorChange(color, e)}
+                  title={color}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

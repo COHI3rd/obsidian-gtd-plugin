@@ -572,6 +572,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     onStatusChange={handleStatusChange}
                                     isDragging={snapshot.isDragging}
                                     showDateLabel={true}
+                                    projectColor={getProjectColor(task.project)}
                                   />
                                 </div>
                               )}

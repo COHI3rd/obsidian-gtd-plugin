@@ -820,12 +820,26 @@ div[style*="position: fixed"] .gtd-task-card {
 }
 
 /* プロジェクトカラーピッカー */
-.gtd-project-card__color-picker {
+.gtd-project-card__color-section {
+  margin-bottom: 8px;
+}
+
+.gtd-project-card__color-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-  padding: 6px 0;
+  justify-content: space-between;
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.gtd-project-card__color-header:hover {
+  background: var(--background-modifier-hover);
 }
 
 .gtd-project-card__color-label {
@@ -834,9 +848,31 @@ div[style*="position: fixed"] .gtd-task-card {
   font-weight: 500;
 }
 
+.gtd-project-card__color-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gtd-project-card__color-preview-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--background-modifier-border);
+}
+
+.gtd-project-card__color-toggle {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
 .gtd-project-card__color-palette {
   display: flex;
   gap: 6px;
+  margin-top: 8px;
+  padding: 8px;
+  background: var(--background-primary);
+  border-radius: 4px;
 }
 
 .gtd-project-card__color-button {

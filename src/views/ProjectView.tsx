@@ -281,7 +281,7 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
           />
           <button
             className="gtd-button gtd-button--icon"
-            onClick={() => loadData(true)}
+            onClick={() => loadData(false)}
             title={t.refresh}
           >
             🔄

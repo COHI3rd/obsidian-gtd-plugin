@@ -109,12 +109,15 @@ export const TaskCard: React.FC<TaskCardProps> = React.memo(({
     return (
       <div
         className={`gtd-task-card gtd-task-card--today ${
+          projectColor ? 'gtd-task-card--with-color' : ''
+        } ${
           task.completed ? 'gtd-task-card--completed' : ''
         }`}
         onClick={handleTitleClick}
         onContextMenu={handleContextMenu}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        style={projectColor ? { borderLeft: `4px solid ${projectColor}` } : undefined}
       >
         {/* チェックボックス（1列レイアウト時に表示） */}
         <div className="gtd-task-card__checkbox" onClick={handleCheckboxClick}>
