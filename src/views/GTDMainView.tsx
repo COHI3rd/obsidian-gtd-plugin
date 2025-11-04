@@ -529,9 +529,9 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         </div>
 
         {/* 2カラムレイアウト */}
-        <div className="gtd-main-view__content">
+        <div className="gtd-main-view__content" style={{ '--split-ratio': `${splitRatio}%` } as React.CSSProperties}>
           {/* 左側: Today */}
-          <div className="gtd-main-view__left" style={{ height: `${splitRatio}%` }}>
+          <div className="gtd-main-view__left">
             <div className="gtd-section">
               <Droppable droppableId="today">
                 {(provided, snapshot) => (
@@ -597,7 +597,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
           </div>
 
           {/* 右側: Next Actions + Inbox */}
-          <div className="gtd-main-view__right" style={{ height: `${100 - splitRatio}%` }}>
+          <div className="gtd-main-view__right">
             {/* 次に取るべき行動 */}
             <div className="gtd-section">
               <Droppable droppableId="next-action">
