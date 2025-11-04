@@ -155,6 +155,20 @@ export interface I18nTexts {
   gtdTasksTooltip: string;
   projectListTooltip: string;
   weeklyReviewTooltip: string;
+
+  // 週次レビュー保存
+  saveReview: string;
+  saveReviewSuccess: string;
+  saveReviewError: string;
+  reviewAlreadyExists: string;
+  reflectionsLabel: string;
+  reflectionsPlaceholder: string;
+  learningsLabel: string;
+  learningsPlaceholder: string;
+  nextWeekGoalsLabel: string;
+  nextWeekGoalsPlaceholder: string;
+  notesLabel: string;
+  notesPlaceholder: string;
 }
 
 export const texts: Record<Language, I18nTexts> = {
@@ -309,6 +323,20 @@ export const texts: Record<Language, I18nTexts> = {
     gtdTasksTooltip: 'GTDタスク',
     projectListTooltip: 'プロジェクト一覧',
     weeklyReviewTooltip: '週次レビュー',
+
+    // 週次レビュー保存
+    saveReview: '📝 レビューを保存',
+    saveReviewSuccess: '✅ レビューを保存しました',
+    saveReviewError: '❌ レビューの保存に失敗しました',
+    reviewAlreadyExists: '⚠️ 今週のレビューは既に保存されています',
+    reflectionsLabel: '💭 振り返り',
+    reflectionsPlaceholder: '今週の振り返りを記入してください...',
+    learningsLabel: '📚 学んだこと',
+    learningsPlaceholder: '今週学んだことを記入してください...',
+    nextWeekGoalsLabel: '🎯 来週の目標',
+    nextWeekGoalsPlaceholder: '来週の目標を記入してください...',
+    notesLabel: '📝 その他メモ',
+    notesPlaceholder: 'その他のメモがあれば記入してください...',
   },
 
   en: {
@@ -462,6 +490,20 @@ export const texts: Record<Language, I18nTexts> = {
     gtdTasksTooltip: 'GTD Tasks',
     projectListTooltip: 'Project List',
     weeklyReviewTooltip: 'Weekly Review',
+
+    // Weekly Review Save
+    saveReview: '📝 Save Review',
+    saveReviewSuccess: '✅ Review saved successfully',
+    saveReviewError: '❌ Failed to save review',
+    reviewAlreadyExists: '⚠️ This week\'s review already exists',
+    reflectionsLabel: '💭 Reflections',
+    reflectionsPlaceholder: 'What went well this week? What could be improved?',
+    learningsLabel: '📚 Learnings',
+    learningsPlaceholder: 'What did you learn this week?',
+    nextWeekGoalsLabel: '🎯 Goals for Next Week',
+    nextWeekGoalsPlaceholder: 'What are your goals for next week?',
+    notesLabel: '📝 Additional Notes',
+    notesPlaceholder: 'Any other notes or thoughts?',
   },
 };
 

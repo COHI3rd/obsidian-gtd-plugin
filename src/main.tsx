@@ -7,6 +7,7 @@ import { FileService } from './services/FileService';
 import { TaskService } from './services/TaskService';
 import { ProjectService } from './services/ProjectService';
 import { DailyNoteService } from './services/DailyNoteService';
+import { WeeklyReviewService } from './services/WeeklyReviewService';
 import { GTDMainView } from './views/GTDMainView';
 import { WeeklyReviewView } from './views/WeeklyReviewView';
 import { ProjectView } from './views/ProjectView';
@@ -24,6 +25,7 @@ class GTDView extends ItemView {
   private projectService: ProjectService;
   private fileService: FileService;
   private dailyNoteService: DailyNoteService;
+  private weeklyReviewService: WeeklyReviewService;
   public refreshCallback: (() => void) | null = null;
 
   constructor(
@@ -35,6 +37,7 @@ class GTDView extends ItemView {
     this.taskService = new TaskService(this.fileService);
     this.projectService = new ProjectService(this.app, plugin.settings);
     this.dailyNoteService = new DailyNoteService(this.app, plugin.settings);
+    this.weeklyReviewService = new WeeklyReviewService(this.app, plugin.settings.reviewFolder);
     this.taskService.setDailyNoteService(this.dailyNoteService);
     this.taskService.setProjectService(this.projectService);
   }
@@ -155,6 +158,7 @@ class WeeklyReviewViewLeaf extends ItemView {
   private taskService: TaskService;
   private projectService: ProjectService;
   private fileService: FileService;
+  private weeklyReviewService: WeeklyReviewService;
   public refreshFn: (() => void) | null = null;
 
   constructor(
@@ -165,6 +169,7 @@ class WeeklyReviewViewLeaf extends ItemView {
     this.fileService = new FileService(this.app, plugin.settings);
     this.taskService = new TaskService(this.fileService);
     this.projectService = new ProjectService(this.app, plugin.settings);
+    this.weeklyReviewService = new WeeklyReviewService(this.app, plugin.settings.reviewFolder);
     this.taskService.setProjectService(this.projectService);
   }
 
@@ -187,6 +192,7 @@ class WeeklyReviewViewLeaf extends ItemView {
             taskService={this.taskService}
             projectService={this.projectService}
             fileService={this.fileService}
+            weeklyReviewService={this.weeklyReviewService}
             settings={this.plugin.settings}
             onRefresh={() => {
               this.plugin.refreshActiveView();
@@ -236,6 +242,7 @@ class WeeklyReviewViewLeaf extends ItemView {
           taskService={this.taskService}
           projectService={this.projectService}
           fileService={this.fileService}
+          weeklyReviewService={this.weeklyReviewService}
           settings={this.plugin.settings}
           onRefresh={() => {
             // GTDビューをリフレッシュ

@@ -6,12 +6,15 @@ import { ViewSwitcher, ViewType } from '../components/ViewSwitcher';
 import { TaskService } from '../services/TaskService';
 import { ProjectService } from '../services/ProjectService';
 import { FileService } from '../services/FileService';
+import { WeeklyReviewService } from '../services/WeeklyReviewService';
 import { getText } from '../i18n';
+import { Notice } from 'obsidian';
 
 interface WeeklyReviewViewProps {
   taskService: TaskService;
   projectService: ProjectService;
   fileService: FileService;
+  weeklyReviewService: WeeklyReviewService;
   settings: GTDSettings;
   onRefresh?: () => void;
   onViewChange?: (view: ViewType) => void;
@@ -30,6 +33,7 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
   taskService,
   projectService,
   fileService,
+  weeklyReviewService,
   settings,
   onRefresh,
   onViewChange,
@@ -44,6 +48,12 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
   const [completedThisWeek, setCompletedThisWeek] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSection, setSelectedSection] = useState<'someday' | 'waiting' | 'projects' | 'completed'>('completed');
+
+  // レビュー入力フィールド
+  const [reflections, setReflections] = useState('');
+  const [learnings, setLearnings] = useState('');
+  const [nextWeekGoals, setNextWeekGoals] = useState('');
+  const [notes, setNotes] = useState('');
 
   // データを読み込み
   const loadData = async (silent = false) => {
@@ -173,6 +183,45 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
       }
     } catch (error) {
       console.error('[WeeklyReview] Failed to toggle task completion:', error);
+    }
+  };
+
+  // レビューを保存
+  const handleSaveReview = async () => {
+    try {
+      // 既存レビューチェック
+      const hasReview = await weeklyReviewService.hasReviewForCurrentWeek();
+      if (hasReview) {
+        new Notice(t.reviewAlreadyExists);
+        return;
+      }
+
+      // レビュー作成
+      const review = await weeklyReviewService.createWeeklyReview(new Date(), {
+        completedTasksCount: completedThisWeek.length,
+        activeProjectsCount: activeProjects.length,
+        reflections,
+        learnings,
+        nextWeekGoals,
+        notes,
+      });
+
+      new Notice(t.saveReviewSuccess);
+
+      // レビューファイルを開く
+      const file = fileService.getApp().vault.getAbstractFileByPath(review.filePath);
+      if (file) {
+        await fileService.getApp().workspace.getLeaf(false).openFile(file as any);
+      }
+
+      // フィールドをクリア
+      setReflections('');
+      setLearnings('');
+      setNextWeekGoals('');
+      setNotes('');
+    } catch (error) {
+      console.error('Failed to save review:', error);
+      new Notice(t.saveReviewError);
     }
   };
 
@@ -457,6 +506,67 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
           )}
         </div>
       )}
+
+      {/* レビュー保存セクション */}
+      <div className="gtd-weekly-review__section">
+        <div className="gtd-weekly-review__section-header">
+          <h3>{t.saveReview}</h3>
+        </div>
+
+        <div className="gtd-weekly-review__review-form">
+          <div className="gtd-form-group">
+            <label>{t.reflectionsLabel}</label>
+            <textarea
+              className="gtd-input"
+              value={reflections}
+              onChange={(e) => setReflections(e.target.value)}
+              placeholder={t.reflectionsPlaceholder}
+              rows={4}
+            />
+          </div>
+
+          <div className="gtd-form-group">
+            <label>{t.learningsLabel}</label>
+            <textarea
+              className="gtd-input"
+              value={learnings}
+              onChange={(e) => setLearnings(e.target.value)}
+              placeholder={t.learningsPlaceholder}
+              rows={4}
+            />
+          </div>
+
+          <div className="gtd-form-group">
+            <label>{t.nextWeekGoalsLabel}</label>
+            <textarea
+              className="gtd-input"
+              value={nextWeekGoals}
+              onChange={(e) => setNextWeekGoals(e.target.value)}
+              placeholder={t.nextWeekGoalsPlaceholder}
+              rows={4}
+            />
+          </div>
+
+          <div className="gtd-form-group">
+            <label>{t.notesLabel}</label>
+            <textarea
+              className="gtd-input"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder={t.notesPlaceholder}
+              rows={3}
+            />
+          </div>
+
+          <button
+            className="gtd-button gtd-button--primary"
+            onClick={handleSaveReview}
+            style={{ width: '100%', marginTop: '12px' }}
+          >
+            {t.saveReview}
+          </button>
+        </div>
+      </div>
 
       {/* 週次レビューのヒント */}
       <div className="gtd-weekly-review__tips">

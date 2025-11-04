@@ -86,6 +86,12 @@ export interface WeeklyReview {
   date: Date;
   reviewType: 'weekly';
   filePath: string;
+  notes: string;
+  completedTasksCount: number;
+  activeProjectsCount: number;
+  reflections: string;
+  learnings: string;
+  nextWeekGoals: string;
 }
 
 /**
