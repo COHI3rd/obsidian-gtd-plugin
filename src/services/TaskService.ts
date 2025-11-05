@@ -135,7 +135,7 @@ export class TaskService {
       }
 
       const task = new TaskModel({
-        id: Date.now().toString().slice(-6), // シンプルな6桁ID
+        id: this.generateUUID(), // UUID生成
         title: data.title,
         status: finalStatus,
         priority: data.priority || 'medium',
@@ -368,6 +368,23 @@ export class TaskService {
     taskModel.assignToProject(projectName);
 
     await this.fileService.updateTask(taskModel);
+  }
+
+  /**
+   * UUID v4を生成
+   */
+  private generateUUID(): string {
+    // crypto.randomUUID() が使える環境ならそれを使用
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+
+    // フォールバック: 簡易的なUUID生成
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   }
 }
 

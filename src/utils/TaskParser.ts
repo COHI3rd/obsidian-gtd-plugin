@@ -20,8 +20,11 @@ export class TaskParser {
       const { data, content: body } = matter(content);
       const fm = data as TaskFrontmatter;
 
+      // IDがフロントマターにあればそれを使用、なければUUIDを生成
+      const taskId = fm.id || this.generateUUID();
+
       return new TaskModel({
-        id: this.extractFileId(filePath),
+        id: taskId,
         title: fm.title || '無題のタスク',
         status: fm.status || 'inbox',
         project: fm.project || null,
@@ -38,7 +41,7 @@ export class TaskParser {
       console.error('Failed to parse task file:', filePath, error);
       // パースエラー時はデフォルトタスクを返す
       return new TaskModel({
-        id: this.extractFileId(filePath),
+        id: this.generateUUID(),
         title: '読み込みエラー',
         filePath,
       });
@@ -53,6 +56,7 @@ export class TaskParser {
    */
   static stringify(task: Task): string {
     const frontmatter: TaskFrontmatter = {
+      id: task.id,                // IDをフロントマターに保存
       title: task.title,
       status: task.status,
       project: task.project,
@@ -94,10 +98,20 @@ export class TaskParser {
   }
 
   /**
-   * ファイルパスからファイルIDを抽出
+   * UUID v4を生成（ブラウザ環境用）
    */
-  private static extractFileId(filePath: string): string {
-    return filePath.replace(/\\/g, '/').split('/').pop()?.replace('.md', '') || '';
+  private static generateUUID(): string {
+    // crypto.randomUUID() が使える環境ならそれを使用
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+
+    // フォールバック: 簡易的なUUID生成
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   }
 
   /**

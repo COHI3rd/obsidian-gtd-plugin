@@ -87,8 +87,8 @@ export class ProjectService {
         throw new GTDError(ErrorType.VALIDATION_ERROR, 'プロジェクトのタイトルは必須です');
       }
 
-      // シンプルなIDを生成（簡易連番）
-      const projectId = Date.now().toString().slice(-6);
+      // UUIDを生成
+      const projectId = this.generateUUID();
 
       // タイトルをサニタイズ（ファイル名に使えない文字を除去）
       const sanitizedTitle = data.title.replace(/[/\\:*?"<>|]/g, '_');
@@ -273,8 +273,11 @@ export class ProjectService {
         return null;
       }
 
+      // IDがフロントマターにあればそれを使用、なければUUIDを生成
+      const projectId = data.id || this.generateUUID();
+
       return new ProjectModel({
-        id: this.extractFileId(filePath),
+        id: projectId,
         title: data.title || '無題のプロジェクト',
         importance: data.importance || 3,
         deadline: data.deadline ? new Date(data.deadline) : null,
@@ -382,6 +385,7 @@ export class ProjectService {
    */
   private stringifyProject(project: Project): string {
     const frontmatter = {
+      id: project.id,              // IDをフロントマターに保存
       type: 'project',
       title: project.title,
       importance: project.importance,
@@ -405,10 +409,20 @@ export class ProjectService {
   }
 
   /**
-   * ファイルパスからファイルIDを抽出
+   * UUID v4を生成
    */
-  private extractFileId(filePath: string): string {
-    return filePath.replace(/\\/g, '/').split('/').pop()?.replace('.md', '') || '';
+  private generateUUID(): string {
+    // crypto.randomUUID() が使える環境ならそれを使用
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+
+    // フォールバック: 簡易的なUUID生成
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   }
 
   /**

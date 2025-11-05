@@ -100,6 +100,7 @@ export interface WeeklyReview {
  * タスクのフロントマター（YAMLパース用）
  */
 export interface TaskFrontmatter {
+  id?: string;                   // 一意のタスクID（UUID）
   title?: string;
   status?: TaskStatus;
   project?: string | null;
@@ -115,6 +116,7 @@ export interface TaskFrontmatter {
  * プロジェクトのフロントマター（YAMLパース用）
  */
 export interface ProjectFrontmatter {
+  id?: string;                   // 一意のプロジェクトID（UUID）
   type?: 'project';
   title?: string;
   importance?: number;
