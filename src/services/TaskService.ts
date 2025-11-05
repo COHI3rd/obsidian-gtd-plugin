@@ -287,7 +287,6 @@ export class TaskService {
    */
   async moveTaskToTrash(taskId: string): Promise<void> {
     try {
-      console.log(`[TaskService] Moving task to trash: ${taskId}`);
       const task = await this.fileService.getTaskById(taskId);
       if (!task) {
         throw new Error(`Task not found: ${taskId}`);
@@ -300,14 +299,11 @@ export class TaskService {
       taskModel.setDate(null);
       taskModel.uncomplete();
 
-      console.log(`[TaskService] Updating task status to trash`);
       await this.fileService.updateTask(taskModel);
 
       // ファイルを ゴミ箱 フォルダに移動
       const trashFolder = 'GTD/Tasks/ゴミ箱';
-      console.log(`[TaskService] Moving task file to: ${trashFolder}`);
       await this.fileService.moveTaskToFolder(taskModel, trashFolder);
-      console.log(`[TaskService] Successfully moved task to trash: ${taskId}`);
     } catch (error) {
       console.error(`[TaskService] Failed to move task to trash: ${taskId}`, error);
       throw error;

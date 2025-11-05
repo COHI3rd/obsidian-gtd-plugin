@@ -55,11 +55,9 @@ export class FileService {
 
         // IDがなかった場合、即座にファイルに書き込む
         if (!hasId) {
-          console.log(`[FileService] Adding ID to existing task: ${file.path}`);
           try {
             const updatedContent = TaskParser.stringify(task);
             await this.app.vault.modify(file, updatedContent);
-            console.log(`[FileService] ID saved: ${task.id}`);
           } catch (saveError) {
             console.error(`[FileService] Failed to save ID for: ${file.path}`, saveError);
           }
@@ -263,15 +261,10 @@ export class FileService {
    */
   async moveTaskToFolder(task: Task, folderPath: string): Promise<void> {
     try {
-      console.log(`[FileService] moveTaskToFolder called`);
-      console.log(`[FileService] Task: ${task.title}, From: ${task.filePath}, To: ${folderPath}`);
-
       const file = this.app.vault.getAbstractFileByPath(task.filePath);
       if (!file || !(file instanceof TFile)) {
-        console.error(`[FileService] Task file not found: ${task.filePath}`);
         throw new Error(`Task file not found: ${task.filePath}`);
       }
-      console.log(`[FileService] File found: ${file.path}`);
 
       // 現在のファイルのフォルダパスを取得
       const currentFolder = file.parent?.path || '';
@@ -280,13 +273,11 @@ export class FileService {
 
       // 既に目的のフォルダにある場合はスキップ
       if (normalizedCurrentFolder === normalizedTargetFolder) {
-        console.log(`[FileService] File is already in target folder, skipping move`);
         return;
       }
 
       // フォルダが存在しない場合は作成
       await this.ensureFolderExists(folderPath);
-      console.log(`[FileService] Target folder ensured: ${folderPath}`);
 
       // ファイル名と拡張子を分離
       const fileName = file.name;
@@ -302,25 +293,19 @@ export class FileService {
         if (newPath !== file.path) {
           newPath = `${folderPath}/${baseName}_${counter}${extension}`;
           counter++;
-          console.log(`[FileService] Path already exists, trying: ${newPath}`);
         } else {
           // 移動元と同じパスの場合（既にそこにある）
           break;
         }
       }
 
-      console.log(`[FileService] Final path: ${newPath}`);
-
       // 移動元と移動先が同じ場合はスキップ
       if (file.path === newPath) {
-        console.log(`[FileService] Source and destination are the same, skipping move`);
         return;
       }
 
       // ファイルを移動
-      console.log(`[FileService] Calling renameFile...`);
       await this.app.fileManager.renameFile(file, newPath);
-      console.log(`[FileService] File moved successfully`);
 
       // タスクのfilePathを更新
       task.filePath = newPath;

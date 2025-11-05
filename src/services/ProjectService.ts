@@ -52,11 +52,9 @@ export class ProjectService {
 
             // IDがなかった場合、即座にファイルに書き込む
             if (!hasId) {
-              console.log(`[ProjectService] Adding ID to existing project: ${file.path}`);
               try {
                 const updatedContent = this.stringifyProject(project);
                 await this.app.vault.modify(file, updatedContent);
-                console.log(`[ProjectService] ID saved: ${project.id}`);
               } catch (saveError) {
                 console.error(`[ProjectService] Failed to save ID for: ${file.path}`, saveError);
               }
@@ -88,11 +86,9 @@ export class ProjectService {
 
             // IDがなかった場合、即座にファイルに書き込む
             if (!hasId) {
-              console.log(`[ProjectService] Adding ID to existing completed project: ${file.path}`);
               try {
                 const updatedContent = this.stringifyProject(project);
                 await this.app.vault.modify(file, updatedContent);
-                console.log(`[ProjectService] ID saved: ${project.id}`);
               } catch (saveError) {
                 console.error(`[ProjectService] Failed to save ID for: ${file.path}`, saveError);
               }
