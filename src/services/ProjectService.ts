@@ -87,7 +87,14 @@ export class ProjectService {
         throw new GTDError(ErrorType.VALIDATION_ERROR, 'プロジェクトのタイトルは必須です');
       }
 
-      const fileName = `${data.title.replace(/[/\\:*?"<>|]/g, '_')}.md`;
+      // 一意のプロジェクトIDを生成
+      const projectId = Date.now().toString();
+
+      // タイトルをサニタイズ（ファイル名に使えない文字を除去）
+      const sanitizedTitle = data.title.replace(/[/\\:*?"<>|]/g, '_');
+
+      // ファイル名: タイトル_プロジェクトID.md（一意性を保証）
+      const fileName = `${sanitizedTitle}_${projectId}.md`;
       const filePath = `${this.settings.projectFolder}/${fileName}`;
 
       // フォルダが存在しない場合は作成
@@ -105,7 +112,7 @@ export class ProjectService {
       }
 
       const project = new ProjectModel({
-        id: Date.now().toString(),
+        id: projectId,
         title: data.title,
         importance: data.importance || 3,
         deadline: data.deadline || null,

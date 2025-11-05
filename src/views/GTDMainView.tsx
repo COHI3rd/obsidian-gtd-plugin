@@ -54,7 +54,11 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
       }
       const allTasks = await taskService.getAllTasks();
       const allProjects = await projectService.getAllProjects();
-      setTasks(allTasks);
+
+      // ゴミ箱にあるタスク（status: 'trash'）を除外
+      const activeTasks = allTasks.filter(task => task.status !== 'trash');
+
+      setTasks(activeTasks);
       setProjects(allProjects);
     } catch (error) {
       console.error('Failed to load tasks:', error);

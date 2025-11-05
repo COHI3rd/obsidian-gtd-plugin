@@ -67,25 +67,21 @@ export class FileService {
    */
   async createTask(task: Task): Promise<string> {
     try {
-      const fileName = `${task.title.replace(/[/\\:*?"<>|]/g, '_')}.md`;
+      // タイトルをサニタイズ（ファイル名に使えない文字を除去）
+      const sanitizedTitle = task.title.replace(/[/\\:*?"<>|]/g, '_');
+
+      // ファイル名: タイトル_タスクID.md（一意性を保証）
+      const fileName = `${sanitizedTitle}_${task.id}.md`;
       const filePath = `${this.settings.taskFolder}/${fileName}`;
 
       // フォルダが存在しない場合は作成
       await this.ensureFolderExists(this.settings.taskFolder);
 
-      // ファイルが既に存在する場合は番号を付ける
-      let finalPath = filePath;
-      let counter = 1;
-      while (this.app.vault.getAbstractFileByPath(finalPath)) {
-        finalPath = `${this.settings.taskFolder}/${task.title}_${counter}.md`;
-        counter++;
-      }
-
       const content = TaskParser.stringify(task);
-      await this.app.vault.create(finalPath, content);
+      await this.app.vault.create(filePath, content);
       // 通知はTaskServiceで行うため、ここでは通知しない
 
-      return finalPath;
+      return filePath;
     } catch (error) {
       console.error('Failed to create task:', error);
       throw error;
@@ -242,25 +238,41 @@ export class FileService {
    */
   async moveTaskToFolder(task: Task, folderPath: string): Promise<void> {
     try {
+      console.log(`[FileService] moveTaskToFolder called`);
+      console.log(`[FileService] Task: ${task.title}, From: ${task.filePath}, To: ${folderPath}`);
+
       // フォルダが存在しない場合は作成
       await this.ensureFolderExists(folderPath);
+      console.log(`[FileService] Target folder ensured: ${folderPath}`);
 
       const file = this.app.vault.getAbstractFileByPath(task.filePath);
       if (!file || !(file instanceof TFile)) {
+        console.error(`[FileService] Task file not found: ${task.filePath}`);
         throw new Error(`Task file not found: ${task.filePath}`);
       }
+      console.log(`[FileService] File found: ${file.path}`);
 
       // 新しいファイルパスを生成
       const fileName = file.name;
       const newPath = `${folderPath}/${fileName}`;
+      console.log(`[FileService] New path: ${newPath}`);
 
       // ファイルを移動
+      console.log(`[FileService] Calling renameFile...`);
       await this.app.fileManager.renameFile(file, newPath);
+      console.log(`[FileService] File moved successfully`);
 
       // タスクのfilePathを更新
       task.filePath = newPath;
     } catch (error) {
-      console.error('Failed to move task to folder:', error);
+      console.error('[FileService] Failed to move task to folder:', error);
+      console.error('[FileService] Error details:', {
+        taskTitle: task.title,
+        fromPath: task.filePath,
+        toFolder: folderPath,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorStack: error instanceof Error ? error.stack : undefined
+      });
       new Notice('タスクの移動に失敗しました');
       throw error;
     }
