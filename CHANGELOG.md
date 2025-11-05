@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2025-11-05
+
+### Added
+
+#### Context Menu Enhancements
+- **🖱️ Project Assignment via Context Menu**: Assign tasks to projects directly from right-click menu
+  - Right-click any task card to open context menu
+  - New "プロジェクト" (Projects) section with active projects list
+  - "プロジェクトから外す" option to remove project assignment
+  - Project names displayed with color indicators (●)
+  - Real-time project list updates when new projects are created
+  - No manual refresh needed - menu updates automatically
+
+#### Date Management
+- **📅 Automatic Date Setting for Today Status**: Date automatically assigned when status changes to 'today'
+  - Right-click menu: Changing status to "Today" sets date to today
+  - Drag & drop: Dropping to Today section sets date to today
+  - Date automatically cleared when moving away from Today
+  - Consistent behavior across all status change methods
+
+#### File Monitoring
+- **🔍 Project Folder Monitoring**: Automatic view refresh when projects change
+  - create, modify, delete, rename events monitored for project files
+  - GTD Main View refreshes when project folder changes detected
+  - Context menu project list stays up-to-date automatically
+  - Optimized logging - only GTD-related files logged
+
+### Changed
+- **♻️ Enhanced TaskCard Memo Comparison**: More accurate re-rendering detection
+  - Added `availableProjects` comparison to React.memo
+  - Added `task.date` comparison for date changes
+  - Added `task.status` comparison for status changes
+  - Context menu updates immediately when project list changes
+
+### Fixed
+- **🔧 UUID Auto-Save on File Load**: Persistent UUIDs for existing files
+  - Files without IDs get UUIDs saved immediately on first load
+  - Prevents "Task not found" errors after UUID generation
+  - Works for both tasks and projects
+  - Handles both active and completed items
+
+### Technical
+- Enhanced file monitoring with `create` event handler
+- Project folder path added to all file event listeners (create, modify, delete, rename)
+- TaskCard React.memo comparison includes `availableProjects`, `task.date`, `task.status`
+- FileService and ProjectService auto-save UUIDs via `vault.modify()`
+- GTDMainView `handleStatusChange` uses `moveTaskToToday()` for 'today' status
+- Drag & drop handlers set `date: null` for non-today statuses
+- Portal-based context menu rendering with `ReactDOM.createPortal()`
+- Fixed z-index to 999999 for context menu visibility
+
 ## [1.2.0] - 2025-11-04
 
 ### Added

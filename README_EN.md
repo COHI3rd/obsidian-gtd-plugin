@@ -17,7 +17,11 @@ A powerful GTD (Getting Things Done) task management plugin for Obsidian featuri
 - 🗑️ **Trash Bin** - Drag & drop tasks to delete (moved to trash folder)
 - 🔽 **Collapsible Groups** - Fold sections to reduce clutter
 - 👆 **Drop to Collapsed Groups** - Drag tasks to closed groups via title
-- 🖱️ **Right-Click Context Menu** - Quick status changes via context menu
+- 🖱️ **Right-Click Context Menu** - Quick status changes and project assignment
+  - Change status (Inbox, Next Action, Today, Waiting, Someday, Trash)
+  - Assign to project (only active projects shown)
+  - Remove from project
+  - Real-time updates - new projects appear in menu immediately
 
 ### Project & Review Management
 - 📊 **Project Management** - Auto-calculate progress with backlink support

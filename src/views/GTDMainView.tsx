@@ -146,6 +146,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
   }, [tasks, sortTasks]);
 
   // 今日のタスクを取得（完了済みも含める）- useMemoでメモ化
+  // dateが今日のタスクを含む（status='today'の場合はdateも今日になっている）
   const todayTasks = useMemo(() => {
     const todayTasks = tasks.filter((task) => task.isToday());
     return sortTasks(todayTasks);
@@ -156,6 +157,13 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
   const nextActionTasks = useMemo(() => getTasksByStatus('next-action'), [getTasksByStatus]);
   const waitingTasks = useMemo(() => getTasksByStatus('waiting'), [getTasksByStatus]);
   const somedayTasks = useMemo(() => getTasksByStatus('someday'), [getTasksByStatus]);
+
+  // 完了していないプロジェクトのリストを取得（コンテキストメニュー用）
+  const activeProjects = useMemo(() => {
+    return projects
+      .filter(p => p.status !== 'completed')
+      .map(p => ({ title: p.title, color: p.color }));
+  }, [projects]);
 
   // タスク読み込み後に空のグループを閉じる（初回ロード時のみ実行）
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -312,7 +320,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         });
       } else if (destination.droppableId === 'next-action') {
         setTasks(prevTasks => prevTasks.map(t =>
-          t.id === task.id ? new TaskModel({ ...t, status: 'next-action' as TaskStatus }) : t
+          t.id === task.id ? new TaskModel({ ...t, status: 'next-action' as TaskStatus, date: null }) : t
         ));
         taskService.changeTaskStatus(task.id, 'next-action').catch(error => {
           console.error('Failed to change task status:', error);
@@ -320,7 +328,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         });
       } else if (destination.droppableId === 'inbox') {
         setTasks(prevTasks => prevTasks.map(t =>
-          t.id === task.id ? new TaskModel({ ...t, status: 'inbox' as TaskStatus }) : t
+          t.id === task.id ? new TaskModel({ ...t, status: 'inbox' as TaskStatus, date: null }) : t
         ));
         taskService.changeTaskStatus(task.id, 'inbox').catch(error => {
           console.error('Failed to change task status:', error);
@@ -328,7 +336,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         });
       } else if (destination.droppableId === 'waiting') {
         setTasks(prevTasks => prevTasks.map(t =>
-          t.id === task.id ? new TaskModel({ ...t, status: 'waiting' as TaskStatus }) : t
+          t.id === task.id ? new TaskModel({ ...t, status: 'waiting' as TaskStatus, date: null }) : t
         ));
         taskService.changeTaskStatus(task.id, 'waiting').catch(error => {
           console.error('Failed to change task status:', error);
@@ -336,7 +344,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
         });
       } else if (destination.droppableId === 'someday') {
         setTasks(prevTasks => prevTasks.map(t =>
-          t.id === task.id ? new TaskModel({ ...t, status: 'someday' as TaskStatus }) : t
+          t.id === task.id ? new TaskModel({ ...t, status: 'someday' as TaskStatus, date: null }) : t
         ));
         taskService.changeTaskStatus(task.id, 'someday').catch(error => {
           console.error('Failed to change task status:', error);
@@ -426,20 +434,52 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
     // 即座にUIを更新（楽観的更新）
     setTasks(prevTasks => prevTasks.map(t => {
       if (t.id === taskId) {
-        const updatedTask = new TaskModel({ ...t, status: newStatus });
+        // todayに変更する場合は日付を今日に設定、それ以外は日付をクリア
+        const updatedDate = newStatus === 'today' ? new Date() : null;
+        const updatedTask = new TaskModel({ ...t, status: newStatus, date: updatedDate });
         return updatedTask;
       }
       return t;
     }));
 
     // バックグラウンドでファイル更新（awaitしない）
-    taskService.changeTaskStatus(taskId, newStatus)
+    // todayへの変更はmoveTaskToTodayを使用、それ以外はchangeTaskStatusを使用
+    const updatePromise = newStatus === 'today'
+      ? taskService.moveTaskToToday(taskId)
+      : taskService.changeTaskStatus(taskId, newStatus);
+
+    updatePromise
       .then(() => {
         console.log('[GTDMainView] Task status changed');
         // 楽観的更新を使用しているため、他のビューへの通知は不要
       })
       .catch(error => {
         console.error('[GTDMainView] Failed to change task status:', error);
+        loadTasks(true);
+      });
+  };
+
+  // タスクをプロジェクトに割り当て（右クリックメニュー用・完全な楽観的更新）
+  const handleAssignProject = async (taskId: string, projectName: string | null) => {
+    console.log('[GTDMainView] Assigning task to project:', taskId, projectName);
+
+    // 即座にUIを更新（楽観的更新）
+    setTasks(prevTasks => prevTasks.map(t => {
+      if (t.id === taskId) {
+        const updatedTask = new TaskModel({ ...t, project: projectName });
+        return updatedTask;
+      }
+      return t;
+    }));
+
+    // バックグラウンドでファイル更新（awaitしない）
+    taskService.assignTaskToProject(taskId, projectName || '')
+      .then(() => {
+        console.log('[GTDMainView] Task assigned to project');
+        // 楽観的更新を使用しているため、他のビューへの通知は不要
+      })
+      .catch(error => {
+        console.error('[GTDMainView] Failed to assign project:', error);
         loadTasks(true);
       });
   };
@@ -601,6 +641,8 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     onToggleComplete={handleToggleComplete}
                                     onOpenTask={handleOpenTask}
                                     onStatusChange={handleStatusChange}
+                                    onAssignProject={handleAssignProject}
+                                    availableProjects={activeProjects}
                                     isDragging={snapshot.isDragging}
                                     showDateLabel={true}
                                     projectColor={getProjectColor(task.project)}
@@ -666,6 +708,8 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     onToggleComplete={handleToggleComplete}
                                     onOpenTask={handleOpenTask}
                                     onStatusChange={handleStatusChange}
+                                    onAssignProject={handleAssignProject}
+                                    availableProjects={activeProjects}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
                                     projectColor={getProjectColor(task.project)}
@@ -719,6 +763,8 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     onToggleComplete={handleToggleComplete}
                                     onOpenTask={handleOpenTask}
                                     onStatusChange={handleStatusChange}
+                                    onAssignProject={handleAssignProject}
+                                    availableProjects={activeProjects}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
                                     projectColor={getProjectColor(task.project)}
@@ -772,6 +818,8 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     onToggleComplete={handleToggleComplete}
                                     onOpenTask={handleOpenTask}
                                     onStatusChange={handleStatusChange}
+                                    onAssignProject={handleAssignProject}
+                                    availableProjects={activeProjects}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
                                     projectColor={getProjectColor(task.project)}
@@ -825,6 +873,8 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
                                     onToggleComplete={handleToggleComplete}
                                     onOpenTask={handleOpenTask}
                                     onStatusChange={handleStatusChange}
+                                    onAssignProject={handleAssignProject}
+                                    availableProjects={activeProjects}
                                     isDragging={snapshot.isDragging}
                                     compact={true}
                                     projectColor={getProjectColor(task.project)}

@@ -512,9 +512,18 @@ export default class GTDPlugin extends Plugin {
 
     // ファイル変更イベントを監視
     this.registerEvent(
+      this.app.vault.on('create', (file) => {
+        // タスクフォルダまたはプロジェクトフォルダ内にファイルが作成された場合のみ処理
+        if (file.path.startsWith(this.settings.taskFolder) || file.path.startsWith(this.settings.projectFolder)) {
+          this.refreshActiveView();
+        }
+      })
+    );
+
+    this.registerEvent(
       this.app.vault.on('modify', (file) => {
-        // タスクフォルダ内のファイルが変更された場合、ビューをリフレッシュ
-        if (file.path.startsWith(this.settings.taskFolder)) {
+        // タスクフォルダまたはプロジェクトフォルダ内のファイルが変更された場合のみ処理
+        if (file.path.startsWith(this.settings.taskFolder) || file.path.startsWith(this.settings.projectFolder)) {
           this.refreshActiveView();
         }
       })
@@ -522,8 +531,8 @@ export default class GTDPlugin extends Plugin {
 
     this.registerEvent(
       this.app.vault.on('delete', (file) => {
-        // タスクフォルダ内のファイルが削除された場合、ビューをリフレッシュ
-        if (file.path.startsWith(this.settings.taskFolder)) {
+        // タスクフォルダまたはプロジェクトフォルダ内のファイルが削除された場合、ビューをリフレッシュ
+        if (file.path.startsWith(this.settings.taskFolder) || file.path.startsWith(this.settings.projectFolder)) {
           this.refreshActiveView();
         }
       })
@@ -531,8 +540,13 @@ export default class GTDPlugin extends Plugin {
 
     this.registerEvent(
       this.app.vault.on('rename', (file, oldPath) => {
-        // タスクフォルダ内のファイルが移動/リネームされた場合、ビューをリフレッシュ
-        if (file.path.startsWith(this.settings.taskFolder) || oldPath.startsWith(this.settings.taskFolder)) {
+        // タスクフォルダまたはプロジェクトフォルダ内のファイルが移動/リネームされた場合、ビューをリフレッシュ
+        if (
+          file.path.startsWith(this.settings.taskFolder) ||
+          oldPath.startsWith(this.settings.taskFolder) ||
+          file.path.startsWith(this.settings.projectFolder) ||
+          oldPath.startsWith(this.settings.projectFolder)
+        ) {
           this.refreshActiveView();
         }
       })
