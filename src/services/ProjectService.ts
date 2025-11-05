@@ -40,9 +40,27 @@ export class ProjectService {
       for (const file of files) {
         try {
           const content = await this.app.vault.read(file);
+
+          // フロントマターにIDがあるかチェック
+          const matter = require('gray-matter');
+          const { data } = matter(content);
+          const hasId = !!data.id;
+
           const project = this.parseProject(content, file.path);
           if (project) {
             projects.push(project);
+
+            // IDがなかった場合、即座にファイルに書き込む
+            if (!hasId) {
+              console.log(`[ProjectService] Adding ID to existing project: ${file.path}`);
+              try {
+                const updatedContent = this.stringifyProject(project);
+                await this.app.vault.modify(file, updatedContent);
+                console.log(`[ProjectService] ID saved: ${project.id}`);
+              } catch (saveError) {
+                console.error(`[ProjectService] Failed to save ID for: ${file.path}`, saveError);
+              }
+            }
           }
         } catch (error) {
           console.error(`Failed to read project file: ${file.path}`, error);
@@ -58,9 +76,27 @@ export class ProjectService {
       for (const file of files) {
         try {
           const content = await this.app.vault.read(file);
+
+          // フロントマターにIDがあるかチェック
+          const matter = require('gray-matter');
+          const { data } = matter(content);
+          const hasId = !!data.id;
+
           const project = this.parseProject(content, file.path);
           if (project) {
             projects.push(project);
+
+            // IDがなかった場合、即座にファイルに書き込む
+            if (!hasId) {
+              console.log(`[ProjectService] Adding ID to existing completed project: ${file.path}`);
+              try {
+                const updatedContent = this.stringifyProject(project);
+                await this.app.vault.modify(file, updatedContent);
+                console.log(`[ProjectService] ID saved: ${project.id}`);
+              } catch (saveError) {
+                console.error(`[ProjectService] Failed to save ID for: ${file.path}`, saveError);
+              }
+            }
           }
         } catch (error) {
           console.error(`Failed to read completed project file: ${file.path}`, error);

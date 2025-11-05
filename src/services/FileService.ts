@@ -44,8 +44,26 @@ export class FileService {
 
       try {
         const content = await this.app.vault.read(file);
+
+        // フロントマターにIDがあるかチェック
+        const matter = require('gray-matter');
+        const { data } = matter(content);
+        const hasId = !!data.id;
+
         const task = TaskParser.parse(content, file.path);
         tasks.push(task);
+
+        // IDがなかった場合、即座にファイルに書き込む
+        if (!hasId) {
+          console.log(`[FileService] Adding ID to existing task: ${file.path}`);
+          try {
+            const updatedContent = TaskParser.stringify(task);
+            await this.app.vault.modify(file, updatedContent);
+            console.log(`[FileService] ID saved: ${task.id}`);
+          } catch (saveError) {
+            console.error(`[FileService] Failed to save ID for: ${file.path}`, saveError);
+          }
+        }
       } catch (error) {
         console.error(`Failed to read task file: ${file.path}`, error);
       }
