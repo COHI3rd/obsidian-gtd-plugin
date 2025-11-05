@@ -248,16 +248,27 @@ export class FileService {
       console.log(`[FileService] moveTaskToFolder called`);
       console.log(`[FileService] Task: ${task.title}, From: ${task.filePath}, To: ${folderPath}`);
 
-      // フォルダが存在しない場合は作成
-      await this.ensureFolderExists(folderPath);
-      console.log(`[FileService] Target folder ensured: ${folderPath}`);
-
       const file = this.app.vault.getAbstractFileByPath(task.filePath);
       if (!file || !(file instanceof TFile)) {
         console.error(`[FileService] Task file not found: ${task.filePath}`);
         throw new Error(`Task file not found: ${task.filePath}`);
       }
       console.log(`[FileService] File found: ${file.path}`);
+
+      // 現在のファイルのフォルダパスを取得
+      const currentFolder = file.parent?.path || '';
+      const normalizedCurrentFolder = currentFolder.replace(/\\/g, '/');
+      const normalizedTargetFolder = folderPath.replace(/\\/g, '/');
+
+      // 既に目的のフォルダにある場合はスキップ
+      if (normalizedCurrentFolder === normalizedTargetFolder) {
+        console.log(`[FileService] File is already in target folder, skipping move`);
+        return;
+      }
+
+      // フォルダが存在しない場合は作成
+      await this.ensureFolderExists(folderPath);
+      console.log(`[FileService] Target folder ensured: ${folderPath}`);
 
       // ファイル名と拡張子を分離
       const fileName = file.name;
@@ -269,13 +280,24 @@ export class FileService {
       let counter = 1;
 
       while (this.app.vault.getAbstractFileByPath(newPath)) {
-        // 同名ファイルが存在する場合
-        newPath = `${folderPath}/${baseName}_${counter}${extension}`;
-        counter++;
-        console.log(`[FileService] Path already exists, trying: ${newPath}`);
+        // 同名ファイルが存在する場合（移動元と異なるパスの場合のみカウント）
+        if (newPath !== file.path) {
+          newPath = `${folderPath}/${baseName}_${counter}${extension}`;
+          counter++;
+          console.log(`[FileService] Path already exists, trying: ${newPath}`);
+        } else {
+          // 移動元と同じパスの場合（既にそこにある）
+          break;
+        }
       }
 
       console.log(`[FileService] Final path: ${newPath}`);
+
+      // 移動元と移動先が同じ場合はスキップ
+      if (file.path === newPath) {
+        console.log(`[FileService] Source and destination are the same, skipping move`);
+        return;
+      }
 
       // ファイルを移動
       console.log(`[FileService] Calling renameFile...`);
