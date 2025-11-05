@@ -8,6 +8,7 @@ import { TaskService } from './services/TaskService';
 import { ProjectService } from './services/ProjectService';
 import { DailyNoteService } from './services/DailyNoteService';
 import { WeeklyReviewService } from './services/WeeklyReviewService';
+import { TemplateService } from './services/TemplateService';
 import { GTDMainView } from './views/GTDMainView';
 import { WeeklyReviewView } from './views/WeeklyReviewView';
 import { ProjectView } from './views/ProjectView';
@@ -38,6 +39,13 @@ class GTDView extends ItemView {
     this.projectService = new ProjectService(this.app, plugin.settings);
     this.dailyNoteService = new DailyNoteService(this.app, plugin.settings);
     this.weeklyReviewService = new WeeklyReviewService(this.app, plugin.settings.reviewFolder, plugin.settings.weekStartDay, plugin.settings.language);
+
+    // テンプレートサービスを初期化して各サービスに設定
+    const templateService = new TemplateService(this.app, plugin.settings);
+    this.taskService.setTemplateService(templateService);
+    this.projectService.setTemplateService(templateService);
+    this.weeklyReviewService.setTemplateService(templateService);
+
     this.taskService.setDailyNoteService(this.dailyNoteService);
     this.taskService.setProjectService(this.projectService);
   }
@@ -399,6 +407,15 @@ export default class GTDPlugin extends Plugin {
     this.taskService = new TaskService(fileService);
     const projectService = new ProjectService(this.app, this.settings);
     this.dailyNoteService = new DailyNoteService(this.app, this.settings);
+
+    // テンプレートサービスを初期化
+    const templateService = new TemplateService(this.app, this.settings);
+    this.taskService.setTemplateService(templateService);
+    projectService.setTemplateService(templateService);
+
+    // テンプレートファイルを初期化（存在しない場合のみ作成）
+    await templateService.initializeAllTemplates();
+
     this.taskService.setDailyNoteService(this.dailyNoteService);
     this.taskService.setProjectService(projectService);
 

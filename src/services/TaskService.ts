@@ -1,6 +1,7 @@
 import { Task, TaskStatus, TaskPriority } from '../types';
 import { TaskModel } from '../models/Task';
 import { FileService } from './FileService';
+import { TemplateService } from './TemplateService';
 import { DateManager } from '../utils/DateManager';
 import { DailyNoteService } from './DailyNoteService';
 import { ErrorHandler, GTDError, ErrorType } from '../utils/ErrorHandler';
@@ -12,6 +13,7 @@ import { ErrorHandler, GTDError, ErrorType } from '../utils/ErrorHandler';
 export class TaskService {
   private dailyNoteService?: DailyNoteService;
   private projectService?: any; // ProjectService型は循環参照を避けるためany
+  private templateService?: TemplateService;
 
   constructor(private fileService: FileService) {}
 
@@ -27,6 +29,13 @@ export class TaskService {
    */
   setProjectService(service: any): void {
     this.projectService = service;
+  }
+
+  /**
+   * テンプレートサービスを設定
+   */
+  setTemplateService(service: TemplateService): void {
+    this.templateService = service;
   }
 
   /**
@@ -114,6 +123,17 @@ export class TaskService {
       const finalStatus = data.status || 'inbox';
       const finalDate = data.date || (finalStatus === 'today' ? new Date() : null);
 
+      // テンプレートから本文を取得
+      let taskBody = '';
+      if (this.templateService) {
+        try {
+          taskBody = await this.templateService.getTaskTemplate();
+        } catch (error) {
+          console.error('Failed to load task template:', error);
+          // テンプレート読み込みに失敗しても続行
+        }
+      }
+
       const task = new TaskModel({
         id: Date.now().toString(),
         title: data.title,
@@ -124,7 +144,7 @@ export class TaskService {
         completed: false,
         tags: [],
         notes: '',
-        body: '',
+        body: taskBody,
         filePath: '',
       });
 
@@ -266,23 +286,32 @@ export class TaskService {
    * タスクをゴミ箱に移動
    */
   async moveTaskToTrash(taskId: string): Promise<void> {
-    const task = await this.fileService.getTaskById(taskId);
-    if (!task) {
-      throw new Error(`Task not found: ${taskId}`);
+    try {
+      console.log(`[TaskService] Moving task to trash: ${taskId}`);
+      const task = await this.fileService.getTaskById(taskId);
+      if (!task) {
+        throw new Error(`Task not found: ${taskId}`);
+      }
+
+      const taskModel = new TaskModel(task);
+      taskModel.changeStatus('trash');
+
+      // ゴミ箱に移動する際は日付と完了ステータスをクリア
+      taskModel.setDate(null);
+      taskModel.uncomplete();
+
+      console.log(`[TaskService] Updating task status to trash`);
+      await this.fileService.updateTask(taskModel);
+
+      // ファイルを ゴミ箱 フォルダに移動
+      const trashFolder = 'GTD/Tasks/ゴミ箱';
+      console.log(`[TaskService] Moving task file to: ${trashFolder}`);
+      await this.fileService.moveTaskToFolder(taskModel, trashFolder);
+      console.log(`[TaskService] Successfully moved task to trash: ${taskId}`);
+    } catch (error) {
+      console.error(`[TaskService] Failed to move task to trash: ${taskId}`, error);
+      throw error;
     }
-
-    const taskModel = new TaskModel(task);
-    taskModel.changeStatus('trash');
-
-    // ゴミ箱に移動する際は日付と完了ステータスをクリア
-    taskModel.setDate(null);
-    taskModel.uncomplete();
-
-    await this.fileService.updateTask(taskModel);
-
-    // ファイルを ゴミ箱 フォルダに移動
-    const trashFolder = 'GTD/Tasks/ゴミ箱';
-    await this.fileService.moveTaskToFolder(taskModel, trashFolder);
   }
 
   /**

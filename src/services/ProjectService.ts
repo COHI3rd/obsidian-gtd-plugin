@@ -3,6 +3,7 @@ import { Project, Task } from '../types';
 import { ProjectModel } from '../models/Project';
 import { GTDSettings } from '../types';
 import { ProjectCalculator } from '../utils/ProjectCalculator';
+import { TemplateService } from './TemplateService';
 import { ErrorHandler, GTDError, ErrorType } from '../utils/ErrorHandler';
 import matter from 'gray-matter';
 
@@ -11,10 +12,19 @@ import matter from 'gray-matter';
  * プロジェクトのCRUDとビジネスロジックを提供
  */
 export class ProjectService {
+  private templateService?: TemplateService;
+
   constructor(
     private app: App,
     private settings: GTDSettings
   ) {}
+
+  /**
+   * テンプレートサービスを設定
+   */
+  setTemplateService(service: TemplateService): void {
+    this.templateService = service;
+  }
 
   /**
    * 全プロジェクトを取得
@@ -23,10 +33,10 @@ export class ProjectService {
   async getAllProjects(): Promise<Project[]> {
     const projects: Project[] = [];
 
-    // プロジェクトフォルダから取得
+    // プロジェクトフォルダから取得（完了フォルダは除外）
     const projectFolder = this.app.vault.getAbstractFileByPath(this.settings.projectFolder);
     if (projectFolder && projectFolder instanceof TFolder) {
-      const files = this.getMarkdownFiles(projectFolder);
+      const files = this.getMarkdownFiles(projectFolder, ['完了']);
       for (const file of files) {
         try {
           const content = await this.app.vault.read(file);
@@ -41,7 +51,8 @@ export class ProjectService {
     }
 
     // 完了フォルダから取得
-    const completedFolder = this.app.vault.getAbstractFileByPath('完了');
+    const completedFolderPath = `${this.settings.projectFolder}/完了`;
+    const completedFolder = this.app.vault.getAbstractFileByPath(completedFolderPath);
     if (completedFolder && completedFolder instanceof TFolder) {
       const files = this.getMarkdownFiles(completedFolder);
       for (const file of files) {
@@ -82,6 +93,17 @@ export class ProjectService {
       // フォルダが存在しない場合は作成
       await this.ensureFolderExists(this.settings.projectFolder);
 
+      // テンプレートから本文を取得
+      let projectBody = '';
+      if (this.templateService) {
+        try {
+          projectBody = await this.templateService.getProjectTemplate();
+        } catch (error) {
+          console.error('Failed to load project template:', error);
+          // テンプレート読み込みに失敗しても続行
+        }
+      }
+
       const project = new ProjectModel({
         id: Date.now().toString(),
         title: data.title,
@@ -95,6 +117,9 @@ export class ProjectService {
         color: data.color || '#6b7280', // デフォルトカラー: グレー
         filePath,
       });
+
+      // プロジェクトに本文を追加
+      (project as any).body = projectBody;
 
       const content = this.stringifyProject(project);
       await this.app.vault.create(filePath, content);
@@ -153,13 +178,17 @@ export class ProjectService {
       const completedDate = project.completedDate || new Date();
       const dateStr = this.formatYearMonth(completedDate);
 
-      // 完了フォルダのパス: 完了/YYYY-MM/
-      const completedFolder = `完了/${dateStr}`;
+      // 完了フォルダのパス: GTD/Projects/完了/YYYY-MM/
+      const completedFolder = `${this.settings.projectFolder}/完了/${dateStr}`;
 
       // フォルダを作成（存在しない場合）
       const folder = this.app.vault.getAbstractFileByPath(completedFolder);
       if (!folder) {
-        await this.app.vault.createFolder(completedFolder);
+        try {
+          await this.app.vault.createFolder(completedFolder);
+        } catch (error) {
+          console.error(`Failed to create completed folder: ${completedFolder}`, error);
+        }
       }
 
       // 新しいファイルパス
@@ -356,7 +385,9 @@ export class ProjectService {
       Object.entries(frontmatter).filter(([_, v]) => v !== undefined)
     );
 
-    return matter.stringify('', cleanedFrontmatter);
+    // プロジェクト本文（body）が存在する場合はそれを使用、なければ空文字列
+    const projectBody = (project as any).body || '';
+    return matter.stringify(projectBody, cleanedFrontmatter);
   }
 
   /**
@@ -368,15 +399,20 @@ export class ProjectService {
 
   /**
    * フォルダ内のMarkdownファイルを再帰的に取得
+   * @param excludeFolderNames - 除外するフォルダ名のリスト
    */
-  private getMarkdownFiles(folder: TFolder): TFile[] {
+  private getMarkdownFiles(folder: TFolder, excludeFolderNames: string[] = []): TFile[] {
     const files: TFile[] = [];
 
     for (const child of folder.children) {
       if (child instanceof TFile && child.extension === 'md') {
         files.push(child);
       } else if (child instanceof TFolder) {
-        files.push(...this.getMarkdownFiles(child));
+        // 除外フォルダに該当する場合はスキップ
+        if (excludeFolderNames.includes(child.name)) {
+          continue;
+        }
+        files.push(...this.getMarkdownFiles(child, excludeFolderNames));
       }
     }
 
@@ -389,7 +425,12 @@ export class ProjectService {
   private async ensureFolderExists(folderPath: string): Promise<void> {
     const folder = this.app.vault.getAbstractFileByPath(folderPath);
     if (!folder) {
-      await this.app.vault.createFolder(folderPath);
+      try {
+        await this.app.vault.createFolder(folderPath);
+      } catch (error) {
+        // フォルダが既に存在する場合のエラーは無視
+        console.debug(`Folder already exists or creation failed: ${folderPath}`);
+      }
     }
   }
 }

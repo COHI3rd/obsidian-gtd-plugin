@@ -33,7 +33,15 @@ export class FileService {
 
     const files = this.getMarkdownFiles(folder);
 
+    // テンプレートファイルを除外
+    const templateFileNames = ['temp_task.md', 'temp_project.md', 'temp_review.md'];
+
     for (const file of files) {
+      // テンプレートファイルの場合はスキップ
+      if (templateFileNames.includes(file.name)) {
+        continue;
+      }
+
       try {
         const content = await this.app.vault.read(file);
         const task = TaskParser.parse(content, file.path);
@@ -220,7 +228,12 @@ export class FileService {
   private async ensureFolderExists(folderPath: string): Promise<void> {
     const folder = this.app.vault.getAbstractFileByPath(folderPath);
     if (!folder) {
-      await this.app.vault.createFolder(folderPath);
+      try {
+        await this.app.vault.createFolder(folderPath);
+      } catch (error) {
+        // フォルダが既に存在する場合のエラーは無視
+        console.debug(`Folder already exists or creation failed: ${folderPath}`);
+      }
     }
   }
 

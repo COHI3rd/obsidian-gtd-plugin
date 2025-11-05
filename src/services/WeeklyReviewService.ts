@@ -1,6 +1,7 @@
 import { App, TFile, TFolder } from 'obsidian';
 import { WeeklyReview } from '../models/WeeklyReview';
 import { WeeklyReviewFrontmatter, WeekStartDay, Language } from '../types';
+import { TemplateService } from './TemplateService';
 import { getText } from '../i18n';
 import * as yaml from 'js-yaml';
 
@@ -13,12 +14,20 @@ export class WeeklyReviewService {
   private reviewFolder: string;
   private weekStartDay: WeekStartDay;
   private language: Language;
+  private templateService?: TemplateService;
 
   constructor(app: App, reviewFolder: string, weekStartDay: WeekStartDay = 'monday', language: Language = 'ja') {
     this.app = app;
     this.reviewFolder = reviewFolder;
     this.weekStartDay = weekStartDay;
     this.language = language;
+  }
+
+  /**
+   * テンプレートサービスを設定
+   */
+  setTemplateService(service: TemplateService): void {
+    this.templateService = service;
   }
 
   /**
