@@ -135,7 +135,7 @@ export class TaskService {
       }
 
       const task = new TaskModel({
-        id: Date.now().toString(),
+        id: Date.now().toString().slice(-6), // シンプルな6桁ID
         title: data.title,
         status: finalStatus,
         priority: data.priority || 'medium',

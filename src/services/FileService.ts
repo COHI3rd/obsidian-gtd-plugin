@@ -70,12 +70,19 @@ export class FileService {
       // タイトルをサニタイズ（ファイル名に使えない文字を除去）
       const sanitizedTitle = task.title.replace(/[/\\:*?"<>|]/g, '_');
 
-      // ファイル名: タイトル_タスクID.md（一意性を保証）
-      const fileName = `${sanitizedTitle}_${task.id}.md`;
-      const filePath = `${this.settings.taskFolder}/${fileName}`;
+      // ファイル名: タイトル.md
+      const baseFileName = `${sanitizedTitle}.md`;
+      let filePath = `${this.settings.taskFolder}/${baseFileName}`;
 
       // フォルダが存在しない場合は作成
       await this.ensureFolderExists(this.settings.taskFolder);
+
+      // 同名ファイルがある場合は連番を付ける
+      let counter = 1;
+      while (this.app.vault.getAbstractFileByPath(filePath)) {
+        filePath = `${this.settings.taskFolder}/${sanitizedTitle}_${counter}.md`;
+        counter++;
+      }
 
       const content = TaskParser.stringify(task);
       await this.app.vault.create(filePath, content);
@@ -252,10 +259,23 @@ export class FileService {
       }
       console.log(`[FileService] File found: ${file.path}`);
 
-      // 新しいファイルパスを生成
+      // ファイル名と拡張子を分離
       const fileName = file.name;
-      const newPath = `${folderPath}/${fileName}`;
-      console.log(`[FileService] New path: ${newPath}`);
+      const baseName = fileName.replace(/\.md$/, '');
+      const extension = '.md';
+
+      // 移動先に同名ファイルがある場合は連番を付ける
+      let newPath = `${folderPath}/${fileName}`;
+      let counter = 1;
+
+      while (this.app.vault.getAbstractFileByPath(newPath)) {
+        // 同名ファイルが存在する場合
+        newPath = `${folderPath}/${baseName}_${counter}${extension}`;
+        counter++;
+        console.log(`[FileService] Path already exists, trying: ${newPath}`);
+      }
+
+      console.log(`[FileService] Final path: ${newPath}`);
 
       // ファイルを移動
       console.log(`[FileService] Calling renameFile...`);

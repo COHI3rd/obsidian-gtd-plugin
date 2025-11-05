@@ -87,18 +87,25 @@ export class ProjectService {
         throw new GTDError(ErrorType.VALIDATION_ERROR, 'プロジェクトのタイトルは必須です');
       }
 
-      // 一意のプロジェクトIDを生成
-      const projectId = Date.now().toString();
+      // シンプルなIDを生成（簡易連番）
+      const projectId = Date.now().toString().slice(-6);
 
       // タイトルをサニタイズ（ファイル名に使えない文字を除去）
       const sanitizedTitle = data.title.replace(/[/\\:*?"<>|]/g, '_');
 
-      // ファイル名: タイトル_プロジェクトID.md（一意性を保証）
-      const fileName = `${sanitizedTitle}_${projectId}.md`;
-      const filePath = `${this.settings.projectFolder}/${fileName}`;
+      // ファイル名: タイトル.md
+      const baseFileName = `${sanitizedTitle}.md`;
+      let filePath = `${this.settings.projectFolder}/${baseFileName}`;
 
       // フォルダが存在しない場合は作成
       await this.ensureFolderExists(this.settings.projectFolder);
+
+      // 同名ファイルがある場合は連番を付ける
+      let counter = 1;
+      while (this.app.vault.getAbstractFileByPath(filePath)) {
+        filePath = `${this.settings.projectFolder}/${sanitizedTitle}_${counter}.md`;
+        counter++;
+      }
 
       // テンプレートから本文を取得
       let projectBody = '';
