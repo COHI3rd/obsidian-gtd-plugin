@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
+import { DragDropContext, Droppable, Draggable, DropResult, DragStart, DragUpdate } from '@hello-pangea/dnd';
 import { Task, TaskStatus, TaskPriority, GTDSettings, Project } from '../types';
 import { TaskCard } from '../components/TaskCard';
 import { QuickAddModal } from '../components/QuickAddModal';
@@ -189,7 +189,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
   };
 
   // ドラッグ開始時の補正（即座に実行）
-  const handleDragStart = (result: any) => {
+  const handleDragStart = (result: DragStart) => {
     // ドラッグ開始のタイムスタンプを記録（クリック判定用）
     lastDragStartTime = Date.now();
     isDraggingNow = true;
@@ -242,7 +242,7 @@ export const GTDMainView: React.FC<GTDMainViewProps> = ({ taskService, projectSe
   };
 
   // ドラッグ中の位置補正（念のため）
-  const handleDragUpdate = (update: any) => {
+  const handleDragUpdate = (update: DragUpdate) => {
     const draggingElement = document.querySelector('[style*="position: fixed"]') as HTMLElement;
     if (!draggingElement) return;
 

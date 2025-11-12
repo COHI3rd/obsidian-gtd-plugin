@@ -165,7 +165,7 @@ export class ProjectService {
       });
 
       // プロジェクトに本文を追加
-      (project as any).body = projectBody;
+      project.body = projectBody;
 
       const content = this.stringifyProject(project);
       await this.app.vault.create(filePath, content);
@@ -436,7 +436,7 @@ export class ProjectService {
     );
 
     // プロジェクト本文（body）が存在する場合はそれを使用、なければ空文字列
-    const projectBody = (project as any).body || '';
+    const projectBody = project.body || '';
     return matter.stringify(projectBody, cleanedFrontmatter);
   }
 

@@ -7,12 +7,21 @@ import { DailyNoteService } from './DailyNoteService';
 import { ErrorHandler, GTDError, ErrorType } from '../utils/ErrorHandler';
 
 /**
+ * プロジェクトサービスのインターフェース（循環参照回避）
+ */
+interface IProjectService {
+  addTaskLinkToProject(projectTitle: string, taskFilePath: string): Promise<void>;
+  removeTaskLinkFromProject(projectTitle: string, taskFilePath: string): Promise<void>;
+  updateAllProjectsProgress(allTasks: Task[]): Promise<void>;
+}
+
+/**
  * タスク操作サービス
  * タスクのCRUDとビジネスロジックを提供
  */
 export class TaskService {
   private dailyNoteService?: DailyNoteService;
-  private projectService?: any; // ProjectService型は循環参照を避けるためany
+  private projectService?: IProjectService;
   private templateService?: TemplateService;
 
   constructor(private fileService: FileService) {}
@@ -27,7 +36,7 @@ export class TaskService {
   /**
    * プロジェクトサービスを設定
    */
-  setProjectService(service: any): void {
+  setProjectService(service: IProjectService): void {
     this.projectService = service;
   }
 

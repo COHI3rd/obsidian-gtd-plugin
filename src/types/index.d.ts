@@ -68,6 +68,7 @@ export interface Project {
   startedDate: Date | null;      // 開始日（in-progressになった日）
   completedDate: Date | null;    // 完了日（completedになった日）
   color: string;                 // プロジェクトカラー（例: "#3b82f6"）
+  body?: string;                 // Markdown本文（テンプレートから読み込まれる）
   filePath: string;
 
   // メソッド

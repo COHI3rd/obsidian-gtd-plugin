@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { TFile, Notice } from 'obsidian';
 import { Task, Project, TaskStatus, GTDSettings } from '../types';
 import { TaskCard } from '../components/TaskCard';
 import { ProjectCard } from '../components/ProjectCard';
@@ -8,7 +9,6 @@ import { ProjectService } from '../services/ProjectService';
 import { FileService } from '../services/FileService';
 import { WeeklyReviewService } from '../services/WeeklyReviewService';
 import { getText } from '../i18n';
-import { Notice } from 'obsidian';
 
 interface WeeklyReviewViewProps {
   taskService: TaskService;
@@ -238,7 +238,14 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
 
         // 既にファイルが開いているかチェック
         const existingLeaf = workspace.getLeavesOfType('markdown').find(
-          leaf => (leaf.view as any).file?.path === review.filePath
+          leaf => {
+            const view = leaf.view;
+            if (view && 'file' in view) {
+              const fileView = view as { file?: { path: string } };
+              return fileView.file?.path === review.filePath;
+            }
+            return false;
+          }
         );
 
         if (existingLeaf) {
@@ -249,7 +256,9 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
           // 開いていない場合は、既存のペイン内に新しいタブとして開く
           // 最も最近使用されたmarkdown leafを取得、なければ新しいタブとして開く
           const leaf = workspace.getLeaf(false);
-          await leaf.openFile(file as any);
+          if (file instanceof TFile) {
+            await leaf.openFile(file);
+          }
           new Notice(t.reviewCreatedAndOpened);
         }
       }
@@ -369,8 +378,8 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
                     className="gtd-weekly-review__completed-task"
                     onClick={async () => {
                       const file = fileService.getApp().vault.getAbstractFileByPath(task.filePath);
-                      if (file) {
-                        await fileService.getApp().workspace.getLeaf(false).openFile(file as any);
+                      if (file instanceof TFile) {
+                        await fileService.getApp().workspace.getLeaf(false).openFile(file);
                       }
                     }}
                   >
@@ -548,8 +557,8 @@ export const WeeklyReviewView: React.FC<WeeklyReviewViewProps> = ({
                     onClick={async () => {
                       // プロジェクトファイルを開く
                       const file = fileService.getApp().vault.getAbstractFileByPath(project.filePath);
-                      if (file) {
-                        await fileService.getApp().workspace.getLeaf(false).openFile(file as any);
+                      if (file instanceof TFile) {
+                        await fileService.getApp().workspace.getLeaf(false).openFile(file);
                       }
                     }}
                     onTaskClick={(task) => fileService.openFile(task.filePath)}

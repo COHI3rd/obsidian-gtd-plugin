@@ -426,7 +426,7 @@ export default class GTDPlugin extends Plugin {
 
     // リボンアイコン
     this.addRibbonIcon('checkbox-glyph', 'GTDビューを開く', () => {
-      this.activateView();
+      void this.activateView();
     });
 
     // コマンド: GTDビューを開く
@@ -434,7 +434,7 @@ export default class GTDPlugin extends Plugin {
       id: 'gtd-open-main-view',
       name: 'GTDビューを開く',
       callback: () => {
-        this.activateView();
+        void this.activateView();
       },
     });
 
@@ -481,7 +481,7 @@ export default class GTDPlugin extends Plugin {
       id: 'gtd-open-weekly-review',
       name: '週次レビューを開く',
       callback: () => {
-        this.activateWeeklyReviewView();
+        void this.activateWeeklyReviewView();
       },
     });
 
@@ -490,7 +490,7 @@ export default class GTDPlugin extends Plugin {
       id: 'gtd-open-project-view',
       name: 'プロジェクト一覧を開く',
       callback: () => {
-        this.activateProjectView();
+        void this.activateProjectView();
       },
     });
 
@@ -554,7 +554,7 @@ export default class GTDPlugin extends Plugin {
 
     // ワークスペースが完全に読み込まれた後、GTDビューを開く
     this.app.workspace.onLayoutReady(() => {
-      this.activateView();
+      void this.activateView();
     });
 
     console.log('GTD Plugin loaded successfully');

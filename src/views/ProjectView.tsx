@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { TFile } from 'obsidian';
 import { Project, ProjectStatus, GTDSettings, Task, TaskStatus, TaskPriority } from '../types';
 import { ProjectCard } from '../components/ProjectCard';
 import { ViewSwitcher, ViewType } from '../components/ViewSwitcher';
@@ -130,8 +131,8 @@ export const ProjectView: React.FC<ProjectViewProps> = ({
   // プロジェクトを開く
   const openProject = async (project: Project) => {
     const file = fileService.getApp().vault.getAbstractFileByPath(project.filePath);
-    if (file) {
-      await fileService.getApp().workspace.getLeaf(false).openFile(file as any);
+    if (file instanceof TFile) {
+      await fileService.getApp().workspace.getLeaf(false).openFile(file);
     }
   };
 

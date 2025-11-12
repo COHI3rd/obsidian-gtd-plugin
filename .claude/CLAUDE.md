@@ -3,7 +3,7 @@
 このドキュメントは、複数人・複数回にわたる開発で一貫性を保つための統一ルールを定めたものです。
 開発に携わるすべての開発者（人間・AI問わず）は、このガイドラインに従ってください。
 
-**機能改善や修正追加などを行うときは、常にきちんと冷静に俯瞰的に実装状況を確認した後に計画を立てて対応を行ってください。**
+計画を綿密に立て、実行時は複数エージェントによる並列処理を積極的に活用し、効率的に作業を行ってください。
 
 ---
 
@@ -1252,7 +1252,238 @@ async loadTasks(): Promise<void> {
 
 ---
 
-### 15.2 推奨事項（Optional）
+#### ❌ async/awaitの適切な使用
+
+**必須ルール**:
+
+1. **async関数は必ずawait式を含む**
+   ```typescript
+   // ❌ 間違い - async関数なのにawaitがない
+   async onOpen(): Promise<void> {
+     this.containerEl.empty();
+     this.render();
+   }
+
+   // ✅ 正しい - awaitを使用
+   async onOpen(): Promise<void> {
+     this.containerEl.empty();
+     await this.loadData();
+     this.render();
+   }
+
+   // ✅ 正しい - awaitが不要ならasyncを削除
+   onOpen(): void {
+     this.containerEl.empty();
+     this.render();
+   }
+   ```
+
+2. **Promise-returning関数は適切に処理**
+   ```typescript
+   // ❌ 間違い - Promiseを無視
+   this.addRibbonIcon('icon', 'Label', () => {
+     this.activateView();  // activateView()がPromiseを返す
+   });
+
+   // ✅ 正しい - voidで明示的に無視（fire-and-forget）
+   this.addRibbonIcon('icon', 'Label', () => {
+     void this.activateView();
+   });
+
+   // ✅ 正しい - async/awaitを使用
+   this.addRibbonIcon('icon', 'Label', async () => {
+     await this.activateView();
+   });
+
+   // ✅ 正しい - .catch()でエラーハンドリング
+   this.addRibbonIcon('icon', 'Label', () => {
+     this.activateView().catch(error => {
+       console.error('Failed to activate view:', error);
+     });
+   });
+   ```
+
+3. **コマンドコールバックでのPromise処理**
+   ```typescript
+   // ❌ 間違い - Promiseを無視
+   this.addCommand({
+     id: 'open-view',
+     name: 'Open view',
+     callback: () => {
+       this.activateView();  // Promise未処理
+     }
+   });
+
+   // ✅ 正しい - voidで明示的に無視
+   this.addCommand({
+     id: 'open-view',
+     name: 'Open view',
+     callback: () => {
+       void this.activateView();
+     }
+   });
+   ```
+
+**理由**:
+- 未処理のPromiseは潜在的なバグの原因
+- エラーが握りつぶされる可能性
+- TypeScriptの`@typescript-eslint/no-floating-promises`ルールに違反
+
+---
+
+#### ❌ UIテキストはセンテンスケースを使用
+
+**必須ルール**:
+
+```typescript
+// ❌ 間違い - Title Case（各単語の頭が大文字）
+new Setting(containerEl)
+  .setName('GTD Task Manager Settings');
+
+// ✅ 正しい - Sentence case（最初の単語のみ大文字）
+new Setting(containerEl)
+  .setName('GTD task manager settings');
+
+// ❌ 間違い - タイトルケースのボタンラベル
+button.setText('Create New Task');
+
+// ✅ 正しい - センテンスケース
+button.setText('Create new task');
+```
+
+**例外**:
+- 固有名詞（Obsidian, GTD など）は大文字を保持
+- 日本語テキストは例外（そのまま使用）
+
+```typescript
+// ✅ 正しい - 固有名詞を含む場合
+new Setting(containerEl)
+  .setName('GTD plugin settings');
+
+// ✅ 正しい - 日本語の場合
+new Setting(containerEl)
+  .setName('GTD プラグイン設定');
+```
+
+**理由**:
+- Obsidianの統一されたUI/UX
+- 他のプラグインとの一貫性
+
+---
+
+#### ❌ Setting().setHeading()を使用
+
+**必須ルール**:
+
+```typescript
+// ❌ 間違い - HTMLヘッディング要素を直接作成
+containerEl.createEl('h2', { text: 'Settings' });
+containerEl.createEl('h3', { text: 'General' });
+
+// ✅ 正しい - Setting().setHeading()を使用
+new Setting(containerEl)
+  .setHeading()
+  .setName('Settings');
+
+new Setting(containerEl)
+  .setHeading()
+  .setName('General');
+```
+
+**理由**:
+- ObsidianのSettings APIとの一貫性
+- スタイリングの統一
+- アクセシビリティの向上
+
+---
+
+#### ❌ TypeScript 'any'型の使用を避ける
+
+**必須ルール**:
+
+```typescript
+// ❌ 間違い - any型の使用
+function handleDragStart(result: any) {
+  // ...
+}
+
+// ✅ 正しい - 適切な型を使用
+import { DragStart } from '@hello-pangea/dnd';
+
+function handleDragStart(result: DragStart) {
+  // ...
+}
+
+// ❌ 間違い - as anyキャスト
+await leaf.openFile(file as any);
+
+// ✅ 正しい - 型ガードを使用
+if (file instanceof TFile) {
+  await leaf.openFile(file);
+}
+
+// ❌ 間違い - any型パラメータ
+.onChange(async (value: any) => {
+  // ...
+});
+
+// ✅ 正しい - 適切な型
+.onChange(async (value: string) => {
+  // ...
+});
+```
+
+**循環依存の場合**:
+```typescript
+// ❌ 間違い - anyで回避
+private projectService?: any;
+
+// ✅ 正しい - インターフェースで分離
+interface IProjectService {
+  calculateProgress(projectId: string): number;
+}
+
+private projectService?: IProjectService;
+```
+
+**理由**:
+- 型安全性の確保
+- バグの早期発見
+- IDEの補完機能の活用
+
+---
+
+#### ❌ 未使用のimport/変数を削除
+
+**必須ルール**:
+
+```typescript
+// ❌ 間違い - 未使用のimport
+import { Project } from './models/Project';
+import { Task } from './models/Task';
+
+// Projectは使用されていない
+
+// ✅ 正しい - 使用しているもののみimport
+import { Task } from './models/Task';
+
+// ❌ 間違い - 未使用の変数
+const body = '';
+const result = await fetchData();
+// bodyは使用されていない
+
+// ✅ 正しい - 使用する変数のみ宣言
+const result = await fetchData();
+```
+
+**理由**:
+- コードの可読性向上
+- バンドルサイズの削減
+- ESLintルール違反の回避
+
+---
+
+### 16.2 推奨事項（Optional）
 
 #### 🔶 ファイル削除はfileManager.trashFileを使用
 
@@ -1306,22 +1537,34 @@ taskModel.setDate(null);
 
 ---
 
-### 15.3 公開前チェックリスト
+### 16.3 公開前チェックリスト
 
 公開版リポジトリにプッシュする前に、必ず以下をチェック：
 
+**必須（Required）**:
 - [ ] `onunload()`で`detachLeavesOfType`を呼んでいない
 - [ ] `console.log`がコード内に残っていない（`console.error`のみOK）
-- [ ] `vault.delete()`を使わず`fileManager.trashFile()`を使用
+- [ ] async関数は必ずawait式を含む（不要ならasync削除）
+- [ ] Promise-returning関数は適切に処理（void/await/.catch()）
+- [ ] UIテキストがセンテンスケースを使用
+- [ ] Setting().setHeading()を使用（createEl('h2')等は禁止）
 - [ ] `as any`キャストを使用していない
+- [ ] 未使用のimport/変数が削除されている
+
+**推奨（Optional）**:
+- [ ] `vault.delete()`を使わず`fileManager.trashFile()`を使用
+- [ ] anyキャストを避ける（型ガード使用）
+
+**ビルド・テスト**:
 - [ ] ビルドが成功する（`npm run build`）
 - [ ] TypeScriptエラーがない（`tsc -noEmit -skipLibCheck`）
+- [ ] ESLintエラーがない（`npm run lint`）
 - [ ] manifest.jsonのバージョンが正しい
 - [ ] versions.jsonが更新されている
 
 ---
 
-### 15.4 開発版 vs 公開版の違い
+### 16.4 開発版 vs 公開版の違い
 
 | 項目 | 開発版（obsidian_gtd） | 公開版（obsidian-gtd-plugin） |
 |------|----------------------|----------------------------|
@@ -1329,17 +1572,27 @@ taskModel.setDate(null);
 | **onunload** | detachしない | detachしない |
 | **vault.delete** | trashFile推奨 | trashFile必須 |
 | **anyキャスト** | 避けるべき | 絶対に避ける |
+| **async/await** | 基本的に遵守 | 厳密に遵守（void演算子使用） |
+| **UIテキスト** | 日本語は自由 | 英語はセンテンスケース必須 |
+| **Setting()** | createEl使用可 | setHeading()必須 |
+| **未使用変数** | 多少はOK | 完全削除 |
 | **コメント** | 日本語OK、詳細でもOK | 簡潔に、必要最小限 |
 
 ---
 
-### 15.5 レビューボットの自動チェック
+### 16.5 レビューボットの自動チェック
 
 Obsidian公式のレビューボット（ObsidianReviewBot）は以下をチェックします：
 
 1. **必須チェック（Required）**:
    - `onunload`で`detachLeavesOfType`を呼んでいないか
    - `console.log`が多すぎないか（目安: 5箇所以内）
+   - UIテキストがセンテンスケースか（英語のみ）
+   - async関数にawait式があるか
+   - Promise-returning関数が適切に処理されているか
+   - Setting().setHeading()を使用しているか（createEl禁止）
+   - TypeScript 'any'型を使用していないか
+   - 未使用のimport/変数がないか
    - その他のアンチパターン
 
 2. **推奨チェック（Optional）**:
@@ -1356,7 +1609,7 @@ Obsidian公式のレビューボット（ObsidianReviewBot）は以下をチェ�
 
 ---
 
-### 15.6 レビュー指摘への対応フロー
+### 16.6 レビュー指摘への対応フロー
 
 1. **レビューボットから指摘を受けた場合**:
    - PRのコメントを確認
@@ -1378,7 +1631,7 @@ Obsidian公式のレビューボット（ObsidianReviewBot）は以下をチェ�
 
 ---
 
-### 15.7 参考リンク
+### 16.7 参考リンク
 
 - [Plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines)
 - [Developer policies](https://docs.obsidian.md/Developer+policies)
